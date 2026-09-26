@@ -1,10 +1,34 @@
 const snippets = {
   python: {
-    stdlib: { repo: "cpython", path: "/ Lib / asyncio / runners.py", icon: "⌘", code: `def run(main, *, debug=None):\n    \"\"\"Execute the coroutine and return the result.\n\n    This function runs the passed coroutine, taking care of managing the\n    asyncio event loop, finalizing asynchronous generators, and closing the\n    default executor.\n    \"\"\"\n    with Runner(debug=debug) as runner:\n        return runner.run(main)` },
-    requests: { repo: "psf/requests", path: "/ src / requests / sessions.py", icon: "◈", code: `def send(self, request, **kwargs):\n    \"\"\"Send a PreparedRequest.\n\n    :param request: The PreparedRequest being sent.\n    :param stream: (optional) Whether to stream the request content.\n    \"\"\"\n    adapter = self.get_adapter(url=request.url)\n    start = preferred_clock()\n    r = adapter.send(request, **kwargs)\n    elapsed = preferred_clock() - start\n    r.elapsed = timedelta(seconds=elapsed)\n    return r` }
+    stdlib: {
+      repo: "cpython",
+      path: "/ Lib / asyncio / runners.py",
+      icon: "⌘",
+      code: `def run(main, *, debug=None):\n    \"\"\"Execute the coroutine and return the result.\n\n    This function runs the passed coroutine, taking care of managing the\n    asyncio event loop, finalizing asynchronous generators, and closing the\n    default executor.\n    \"\"\"\n    with Runner(debug=debug) as runner:\n        return runner.run(main)`,
+    },
+    requests: {
+      repo: "psf/requests",
+      path: "/ src / requests / sessions.py",
+      icon: "◈",
+      code: `def send(self, request, **kwargs):\n    \"\"\"Send a PreparedRequest.\n\n    :param request: The PreparedRequest being sent.\n    :param stream: (optional) Whether to stream the request content.\n    \"\"\"\n    adapter = self.get_adapter(url=request.url)\n    start = preferred_clock()\n    r = adapter.send(request, **kwargs)\n    elapsed = preferred_clock() - start\n    r.elapsed = timedelta(seconds=elapsed)\n    return r`,
+    },
   },
-  cpp: { stdlib: { repo: "llvm-project", path: "/ libcxx / include / algorithm", icon: "◆", code: `template <class _InputIterator, class _OutputIterator>\n_LIBCPP_CONSTEXPR_SINCE_CXX20\n_OutputIterator copy(_InputIterator __first,\n                     _InputIterator __last,\n                     _OutputIterator __result) {\n  for (; __first != __last; ++__first, ++__result)\n    *__result = *__first;\n  return __result;\n}` } },
-  rust: { stdlib: { repo: "rust-lang/rust", path: "/ library / alloc / string.rs", icon: "⚙", code: `pub fn from_utf8(v: Vec<u8>) -> Result<String, FromUtf8Error> {\n    match str::from_utf8(&v) {\n        Ok(_) => Ok(String { vec: v }),\n        Err(e) => Err(FromUtf8Error { bytes: v, error: e }),\n    }\n}\n\npub fn into_bytes(self) -> Vec<u8> {\n    self.vec\n}` } }
+  cpp: {
+    stdlib: {
+      repo: "llvm-project",
+      path: "/ libcxx / include / algorithm",
+      icon: "◆",
+      code: `template <class _InputIterator, class _OutputIterator>\n_LIBCPP_CONSTEXPR_SINCE_CXX20\n_OutputIterator copy(_InputIterator __first,\n                     _InputIterator __last,\n                     _OutputIterator __result) {\n  for (; __first != __last; ++__first, ++__result)\n    *__result = *__first;\n  return __result;\n}`,
+    },
+  },
+  rust: {
+    stdlib: {
+      repo: "rust-lang/rust",
+      path: "/ library / alloc / string.rs",
+      icon: "⚙",
+      code: `pub fn from_utf8(v: Vec<u8>) -> Result<String, FromUtf8Error> {\n    match str::from_utf8(&v) {\n        Ok(_) => Ok(String { vec: v }),\n        Err(e) => Err(FromUtf8Error { bytes: v, error: e }),\n    }\n}\n\npub fn into_bytes(self) -> Vec<u8> {\n    self.vec\n}`,
+    },
+  },
 };
 
 const display = document.querySelector("#code-display");
@@ -22,17 +46,53 @@ const countdownSeconds = document.querySelector("#countdown-seconds");
 const startCountdown = document.querySelector("#start-countdown");
 const themeToggle = document.querySelector("#theme-toggle");
 const restartButton = document.querySelector("#restart");
-let language = "python", source = "python-stdlib", target = "", startedAt = 0, elapsedMs = 0, timerId = null, countdownTimer = null, done = false, paused = false;
+let language = "python",
+  source = "python-stdlib",
+  target = "",
+  startedAt = 0,
+  elapsedMs = 0,
+  timerId = null,
+  countdownTimer = null,
+  done = false,
+  paused = false;
 let syntaxRanges = [];
 let currentItem;
 let punishmentTimer = null;
 let randomStart = false;
 let lastEscapeAt = 0;
 const examples = [
-  { id: "python-stdlib", language: "python", repo: "cpython", path: "/ Lib / asyncio / runners.py", icon: "⌘", code: snippets.python.stdlib.code },
-  { id: "python-requests", language: "python", repo: "psf/requests", path: "/ src / requests / sessions.py", icon: "◈", code: snippets.python.requests.code },
-  { id: "cpp-stdlib", language: "cpp", repo: "llvm-project", path: "/ libcxx / include / algorithm", icon: "◆", code: snippets.cpp.stdlib.code },
-  { id: "rust-stdlib", language: "rust", repo: "rust-lang/rust", path: "/ library / alloc / string.rs", icon: "⚙", code: snippets.rust.stdlib.code }
+  {
+    id: "python-stdlib",
+    language: "python",
+    repo: "cpython",
+    path: "/ Lib / asyncio / runners.py",
+    icon: "⌘",
+    code: snippets.python.stdlib.code,
+  },
+  {
+    id: "python-requests",
+    language: "python",
+    repo: "psf/requests",
+    path: "/ src / requests / sessions.py",
+    icon: "◈",
+    code: snippets.python.requests.code,
+  },
+  {
+    id: "cpp-stdlib",
+    language: "cpp",
+    repo: "llvm-project",
+    path: "/ libcxx / include / algorithm",
+    icon: "◆",
+    code: snippets.cpp.stdlib.code,
+  },
+  {
+    id: "rust-stdlib",
+    language: "rust",
+    repo: "rust-lang/rust",
+    path: "/ library / alloc / string.rs",
+    icon: "⚙",
+    code: snippets.rust.stdlib.code,
+  },
 ];
 
 const syntaxRules = {
@@ -40,32 +100,44 @@ const syntaxRules = {
     ["comment", /#[^\n]*/g],
     ["string", /("""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')/g],
     ["decorator", /@[A-Za-z_]\w*/g],
-    ["keyword", /\b(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|if|import|in|is|lambda|match|not|or|pass|raise|return|try|while|with|yield)\b/g],
+    [
+      "keyword",
+      /\b(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|if|import|in|is|lambda|match|not|or|pass|raise|return|try|while|with|yield)\b/g,
+    ],
     ["literal", /\b(?:False|None|True)\b/g],
-    ["type", /\b(?:Any|Callable|Dict|Iterable|List|Optional|Set|Tuple|Type|bool|bytes|dict|float|int|list|object|set|str|tuple)\b/g],
+    [
+      "type",
+      /\b(?:Any|Callable|Dict|Iterable|List|Optional|Set|Tuple|Type|bool|bytes|dict|float|int|list|object|set|str|tuple)\b/g,
+    ],
     ["number", /\b\d+(?:\.\d+)?\b/g],
-    ["function", /\b[A-Za-z_]\w*(?=\s*\()/g]
+    ["function", /\b[A-Za-z_]\w*(?=\s*\()/g],
   ],
   cpp: [
     ["comment", /\/\/[^\n]*|\/\*[\s\S]*?\*\//g],
     ["string", /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g],
     ["preprocessor", /^\s*#\s*\w+.*$/gm],
-    ["keyword", /\b(?:alignas|auto|bool|break|case|catch|class|const|constexpr|continue|decltype|default|delete|else|enum|explicit|export|extern|for|friend|if|inline|namespace|new|nullptr|operator|private|protected|public|return|sizeof|static|struct|switch|template|this|throw|try|typedef|typename|using|virtual|void|while)\b/g],
+    [
+      "keyword",
+      /\b(?:alignas|auto|bool|break|case|catch|class|const|constexpr|continue|decltype|default|delete|else|enum|explicit|export|extern|for|friend|if|inline|namespace|new|nullptr|operator|private|protected|public|return|sizeof|static|struct|switch|template|this|throw|try|typedef|typename|using|virtual|void|while)\b/g,
+    ],
     ["literal", /\b(?:false|nullptr|true)\b/g],
     ["type", /\b(?:allocator|char|double|float|int|long|size_t|string|unsigned|vector)\b/g],
     ["number", /\b\d+(?:\.\d+)?\b/g],
-    ["function", /\b[A-Za-z_]\w*(?=\s*\()/g]
+    ["function", /\b[A-Za-z_]\w*(?=\s*\()/g],
   ],
   rust: [
     ["comment", /\/\/[^\n]*|\/\*[\s\S]*?\*\//g],
     ["string", /"(?:\\.|[^"\\])*"/g],
     ["macro", /\b[A-Za-z_]\w*!(?=\s*\()/g],
-    ["keyword", /\b(?:as|async|await|break|const|continue|crate|dyn|else|enum|extern|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|self|Self|static|struct|super|trait|type|unsafe|use|where|while)\b/g],
+    [
+      "keyword",
+      /\b(?:as|async|await|break|const|continue|crate|dyn|else|enum|extern|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|self|Self|static|struct|super|trait|type|unsafe|use|where|while)\b/g,
+    ],
     ["literal", /\b(?:false|None|Some|true)\b/g],
     ["type", /\b(?:Result|String|Vec|bool|char|f32|f64|i32|i64|str|u32|u64|usize)\b/g],
     ["number", /\b\d+(?:\.\d+)?\b/g],
-    ["function", /\b[A-Za-z_]\w*(?=\s*\()/g]
-  ]
+    ["function", /\b[A-Za-z_]\w*(?=\s*\()/g],
+  ],
 };
 
 function activeSnippet() {
@@ -88,9 +160,11 @@ function render() {
   language = item.language || detectLanguage(item.filename || item.path || item.repo);
   syntaxRanges = buildSyntaxRanges(target, language);
   document.querySelector("#repo-name").textContent = item.repo;
-  document.querySelector("#repo-path").textContent = ` ${item.path}${startLine ? ` · starts at line ${startLine + 1}` : ""}`;
+  document.querySelector("#repo-path").textContent =
+    ` ${item.path}${startLine ? ` · starts at line ${startLine + 1}` : ""}`;
   document.querySelector("#repo-icon").textContent = item.icon;
-  document.querySelector("#line-count").textContent = `${String(target.split("\n").length).padStart(2, "0")} lines`;
+  document.querySelector("#line-count").textContent =
+    `${String(target.split("\n").length).padStart(2, "0")} lines`;
   input.value = "";
   done = false;
   windowEl.classList.remove("complete");
@@ -115,7 +189,7 @@ function chooseRandomStart(lines) {
 }
 function buildSyntaxRanges(code, lang) {
   const ranges = [];
-  for (const [type, rule] of (syntaxRules[lang] || syntaxRules.generic)) {
+  for (const [type, rule] of syntaxRules[lang] || syntaxRules.generic) {
     for (const match of code.matchAll(rule)) {
       ranges.push({ start: match.index, end: match.index + match[0].length, type });
     }
@@ -125,10 +199,13 @@ function buildSyntaxRanges(code, lang) {
 syntaxRules.generic = [
   ["comment", /#[^\n]*|\/\/[^\n]*|\/\*[\s\S]*?\*\//g],
   ["string", /"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g],
-  ["keyword", /\b(?:class|const|def|else|for|fn|function|if|import|let|new|public|return|static|struct|var|void|while)\b/g],
+  [
+    "keyword",
+    /\b(?:class|const|def|else|for|fn|function|if|import|let|new|public|return|static|struct|var|void|while)\b/g,
+  ],
   ["literal", /\b(?:false|null|true|None|nil)\b/g],
   ["number", /\b\d+(?:\.\d+)?\b/g],
-  ["function", /\b[A-Za-z_]\w*(?=\s*\()/g]
+  ["function", /\b[A-Za-z_]\w*(?=\s*\()/g],
 ];
 function detectLanguage(filename) {
   const extension = filename.toLowerCase().split(".").pop();
@@ -143,23 +220,40 @@ function syntaxClassAt(index) {
 }
 function updateDisplay() {
   const typed = input.value;
-  display.innerHTML = [...target].map((char, i) => {
-    const typedChar = typed[i];
-    const whitespace = /\s/.test(char) || (typedChar && /\s/.test(typedChar));
-    const state = i < typed.length
-      ? whitespace ? "" : typedChar === char ? "correct" : "incorrect"
-      : i === typed.length ? "current" : "";
-    return `<span class="char ${state} ${syntaxClassAt(i)}">${char === "\n" ? "\n" : escapeHtml(char)}</span>`;
-  }).join("");
+  display.innerHTML = [...target]
+    .map((char, i) => {
+      const typedChar = typed[i];
+      const whitespace = /\s/.test(char) || (typedChar && /\s/.test(typedChar));
+      const state =
+        i < typed.length
+          ? whitespace
+            ? ""
+            : typedChar === char
+              ? "correct"
+              : "incorrect"
+          : i === typed.length
+            ? "current"
+            : "";
+      return `<span class="char ${state} ${syntaxClassAt(i)}">${char === "\n" ? "\n" : escapeHtml(char)}</span>`;
+    })
+    .join("");
   const current = display.querySelector(".current");
   if (current) {
     const lineHeight = parseFloat(getComputedStyle(display).lineHeight);
     const currentLine = target.slice(0, input.value.length).split("\n").length - 1;
-    display.scrollTop = Math.max(0, currentLine * lineHeight - display.clientHeight / 2 + lineHeight);
+    display.scrollTop = Math.max(
+      0,
+      currentLine * lineHeight - display.clientHeight / 2 + lineHeight,
+    );
   }
   document.querySelector(".click-hint").style.opacity = typed ? "0" : "1";
 }
-function escapeHtml(value) { return value.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c])); }
+function escapeHtml(value) {
+  return value.replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c],
+  );
+}
 function codeOnly(sourceText) {
   const lines = sourceText.replace(/\r\n?/g, "\n").split("\n");
   const result = [];
@@ -168,9 +262,7 @@ function codeOnly(sourceText) {
   for (const line of lines) {
     const trimmed = line.trim();
     const startsBlock = /^(\/\*|\*\/|```)/.test(trimmed);
-    const commentOnly = inBlockComment ||
-      /^(#|\/\/|\/\*|\*|```)/.test(trimmed) ||
-      startsBlock;
+    const commentOnly = inBlockComment || /^(#|\/\/|\/\*|\*|```)/.test(trimmed) || startsBlock;
 
     if (trimmed.includes("/*") && !trimmed.includes("*/")) inBlockComment = true;
     if (inBlockComment && trimmed.includes("*/")) inBlockComment = false;
@@ -184,15 +276,19 @@ function updateStats() {
   const runningMs = startedAt ? Date.now() - startedAt : 0;
   const elapsed = (elapsedMs + runningMs) / 1000;
   const correct = [...typed].filter((char, i) => char === target[i]).length;
-  const accuracy = typed.length ? Math.round(correct / typed.length * 100) : 100;
-  const progress = target ? Math.min(100, Math.round(typed.length / target.length * 100)) : 0;
+  const accuracy = typed.length ? Math.round((correct / typed.length) * 100) : 100;
+  const progress = target ? Math.min(100, Math.round((typed.length / target.length) * 100)) : 0;
   document.querySelector("#accuracy").textContent = accuracy;
   document.querySelector("#progress").textContent = progress;
   document.querySelector("#progress-bar").style.width = `${progress}%`;
-  document.querySelector("#wpm").textContent = elapsed ? Math.round(correct / 5 / (elapsed / 60)) : 0;
+  document.querySelector("#wpm").textContent = elapsed
+    ? Math.round(correct / 5 / (elapsed / 60))
+    : 0;
   document.querySelector("#time").textContent = formatTime(elapsed);
 }
-function formatTime(seconds) { return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`; }
+function formatTime(seconds) {
+  return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+}
 function enterChallengeMode() {
   document.body.classList.add("challenge-active");
 }
@@ -282,14 +378,19 @@ input.addEventListener("input", () => {
   }
   start();
   if (input.value.length > target.length) input.value = input.value.slice(0, target.length);
-  updateDisplay(); updateStats();
+  updateDisplay();
+  updateStats();
   updatePunishment();
-  if (input.value === target && !done) { done = true; clearInterval(timerId); windowEl.classList.add("complete"); }
+  if (input.value === target && !done) {
+    done = true;
+    clearInterval(timerId);
+    windowEl.classList.add("complete");
+  }
 });
 input.addEventListener("focus", () => {
   document.querySelector("#typing-status").textContent = "TYPING · TAB INSERTS A TAB";
 });
-input.addEventListener("keydown", event => {
+input.addEventListener("keydown", (event) => {
   if (event.key !== "Tab") return;
   event.preventDefault();
   const start = input.selectionStart;
@@ -334,19 +435,30 @@ randomStartToggle.addEventListener("click", () => {
 });
 sourceSelect.addEventListener("change", () => {
   source = sourceSelect.value;
-  currentItem = source === "custom" ? JSON.parse(localStorage.getItem("codetype-last-import") || "null") : examples.find(item => item.id === source);
+  currentItem =
+    source === "custom"
+      ? JSON.parse(localStorage.getItem("codetype-last-import") || "null")
+      : examples.find((item) => item.id === source);
   if (currentItem) render();
 });
-document.addEventListener("click", event => {
+document.addEventListener("click", (event) => {
   const optionsMenu = document.querySelector(".options-menu");
   if (optionsMenu.open && !optionsMenu.contains(event.target)) optionsMenu.open = false;
 });
 document.querySelector("#import-button").addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", () => {
-  const file = fileInput.files[0]; if (!file) return;
+  const file = fileInput.files[0];
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    const imported = { id: "custom", filename: file.name, repo: file.name, path: "/ local file · comments skipped", icon: "↥", code: codeOnly(String(reader.result)) };
+    const imported = {
+      id: "custom",
+      filename: file.name,
+      repo: file.name,
+      path: "/ local file · comments skipped",
+      icon: "↥",
+      code: codeOnly(String(reader.result)),
+    };
     localStorage.setItem("codetype-last-import", JSON.stringify(imported));
     currentItem = imported;
     source = "custom";
@@ -355,17 +467,30 @@ fileInput.addEventListener("change", () => {
   };
   reader.readAsText(file);
 });
-githubButton.addEventListener("click", () => { githubImport.hidden = !githubImport.hidden; if (!githubImport.hidden) githubUrl.focus(); });
+githubButton.addEventListener("click", () => {
+  githubImport.hidden = !githubImport.hidden;
+  if (!githubImport.hidden) githubUrl.focus();
+});
 githubLoad.addEventListener("click", async () => {
-  const match = githubUrl.value.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
-  if (!match) return alert("Paste a GitHub file URL in the format github.com/user/repo/blob/branch/file");
+  const match = githubUrl.value.match(
+    /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/,
+  );
+  if (!match)
+    return alert("Paste a GitHub file URL in the format github.com/user/repo/blob/branch/file");
   const [, owner, repo, branch, path] = match;
   const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
   githubLoad.disabled = true;
   try {
     const response = await fetch(rawUrl);
     if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
-    const imported = { id: "custom", filename: path, repo: `${owner}/${repo}`, path: `/ ${path} · comments skipped`, icon: "◆", code: codeOnly(await response.text()) };
+    const imported = {
+      id: "custom",
+      filename: path,
+      repo: `${owner}/${repo}`,
+      path: `/ ${path} · comments skipped`,
+      icon: "◆",
+      code: codeOnly(await response.text()),
+    };
     localStorage.setItem("codetype-last-import", JSON.stringify(imported));
     currentItem = imported;
     source = "custom";
@@ -373,10 +498,12 @@ githubLoad.addEventListener("click", async () => {
     render();
   } catch (error) {
     alert(`Could not load that GitHub file: ${error.message}`);
-  } finally { githubLoad.disabled = false; }
+  } finally {
+    githubLoad.disabled = false;
+  }
 });
-document.addEventListener("keydown", event => {
-  if (event.key !== "Escape" || !startedAt && !paused && !countdownTimer) return;
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || (!startedAt && !paused && !countdownTimer)) return;
   event.preventDefault();
   const now = Date.now();
   if (now - lastEscapeAt < 450) {
