@@ -14,6 +14,9 @@ export const SHAKE_MS = 750;
 /** Upper bound for the countdown input, in seconds. */
 export const MAX_COUNTDOWN_S = 60;
 
+/** A random start leaves at least this many lines to type (or the whole text if shorter). */
+export const RANDOM_START_MIN_LINES = 8;
+
 /** Standard typing-test definition of a "word". */
 export const CHARS_PER_WORD = 5;
 

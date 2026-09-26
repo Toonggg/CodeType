@@ -5,7 +5,7 @@
 import { DOUBLE_ESCAPE_MS, SHAKE_MS, STATS_TICK_MS, STORAGE_KEYS } from "./constants.js";
 import { EXAMPLES } from "./data/examples.js";
 import { codeOnly } from "./import/comments.js";
-import { buildTarget } from "./practice.js";
+import { buildTarget, chooseStartLine, createDocument, languageOf } from "./practice.js";
 import { clampCountdown, loadSettings, saveSetting } from "./settings.js";
 import { EVENT, STATUS, acceptsInput, createStore, effectsFor, transition } from "./state.js";
 import { readJSON, removeKey, writeJSON } from "./storage.js";
@@ -15,7 +15,7 @@ import { bindEvents } from "./ui/events.js";
 import { populateSourceOptions, renderControls } from "./ui/renderControls.js";
 import { renderStats } from "./ui/renderStats.js";
 import { renderStatus } from "./ui/renderStatus.js";
-import { renderTarget } from "./ui/renderTarget.js";
+import { createTargetView } from "./ui/renderTarget.js";
 import { renderTheme } from "./ui/theme.js";
 
 function loadImport() {
@@ -38,12 +38,17 @@ export function createApp(
   const settings = loadSettings();
   const savedImport = loadImport();
   const firstItem = savedImport ?? EXAMPLES[0];
-  const firstTarget = buildTarget(firstItem, settings, random);
+  const firstDocument = createDocument(firstItem.code, languageOf(firstItem));
+  const firstStart = settings.randomStart ? chooseStartLine(firstDocument.lines, { random }) : 0;
+  const firstTarget = buildTarget(firstDocument, firstStart);
   const store = createStore({
     status: STATUS.IDLE,
     focused: false,
     countdownRemaining: 0,
     item: firstItem,
+    /** The whole source, tokenized once (practice.js). */
+    document: firstDocument,
+    /** What is typed: the document from the start line on. */
     target: firstTarget,
     targetVersion: 1,
     session: createSession(firstTarget.chars),
@@ -140,17 +145,34 @@ export function createApp(
 
   // --- Target ----------------------------------------------------------------
 
-  function rebuildTarget() {
-    const { item, settings: current, targetVersion } = store.get();
-    const target = buildTarget(item, current, random);
-    store.set({ target, targetVersion: targetVersion + 1, session: createSession(target.chars) });
-    dispatch(EVENT.RESET);
+  /** A random start line when the setting is on (never the current one, U8). */
+  function pickStart(document, exclude = -1) {
+    return store.get().settings.randomStart
+      ? chooseStartLine(document.lines, { exclude, random })
+      : 0;
+  }
+
+  /**
+   * Replaces the target. `event` is RESET (back to idle) or RESTART (ready and
+   * focused). Restart alone never calls this, so it retries the same start (U8).
+   */
+  function setTarget(document, startLine, event = EVENT.RESET) {
+    const target = buildTarget(document, startLine);
+    store.set({
+      document,
+      target,
+      targetVersion: store.get().targetVersion + 1,
+      session: createSession(target.chars),
+      edit: null,
+    });
+    dispatch(event);
   }
 
   /** Makes an item the current practice source (Q17). */
   function selectItem(item) {
+    const document = createDocument(item.code, languageOf(item));
     store.set({ item });
-    rebuildTarget();
+    setTarget(document, pickStart(document));
   }
 
   // --- Typing ----------------------------------------------------------------
@@ -226,7 +248,8 @@ export function createApp(
   function setRandomStart(enabled) {
     updateSettings({ randomStart: enabled });
     saveSetting("randomStart", enabled);
-    rebuildTarget();
+    const { document } = store.get();
+    setTarget(document, pickStart(document));
   }
 
   function setAutoIndent(enabled) {
@@ -315,6 +338,10 @@ export function createApp(
     restart() {
       dispatch(EVENT.RESTART);
     },
+    newStart() {
+      const { document, target } = store.get();
+      setTarget(document, pickStart(document, target.startLine), EVENT.RESTART);
+    },
     start() {
       els.optionsMenu.open = false;
       dispatch(EVENT.START, { seconds: store.get().settings.countdownSeconds });
@@ -370,7 +397,14 @@ export function createApp(
     importGithub,
   };
 
-  const renderers = [renderTheme, renderControls, renderTarget, renderStats, renderStatus];
+  const targetView = createTargetView(els);
+  const renderers = [
+    renderTheme,
+    renderControls,
+    (_, state, prev) => targetView.render(state, prev),
+    renderStats,
+    renderStatus,
+  ];
   const lifetime = new AbortController();
 
   function init() {

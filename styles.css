@@ -579,7 +579,9 @@ body.dark.challenge-active .practice-card {
   letter-spacing: 0.06em;
 }
 pre {
+  position: relative;
   margin: 0;
+  tab-size: 4;
   height: 250px;
   max-height: 250px;
   overflow-y: scroll;
@@ -624,6 +626,9 @@ pre {
 }
 .syntax-macro {
   color: #a13b8e;
+}
+.syntax-variable {
+  color: #8a4b00;
 }
 .char.current {
   background: var(--green);
@@ -681,6 +686,9 @@ body.dark pre {
 .dark .syntax-macro {
   color: #d2a8ff;
 }
+.dark .syntax-variable {
+  color: #ffa657;
+}
 .dark .char.correct {
   color: #7ee787;
   background: #183b24;
@@ -692,6 +700,10 @@ body.dark pre {
   background: #5a2020;
   border-radius: 2px;
   font-weight: 500;
+}
+/* One block per line keeps re-layout local to the edited line (P1). */
+.line {
+  display: block;
 }
 /* Whitespace markers (U1): the cursor and mistakes on whitespace stay visible. */
 .char.ws-space,
@@ -798,6 +810,14 @@ body.dark pre {
   border-color: #202320;
   background: #eef4e8;
   color: #202320;
+}
+.stats-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.stats-actions .restart {
+  margin-left: 0;
 }
 .time-stat .stat-label {
   display: flex;

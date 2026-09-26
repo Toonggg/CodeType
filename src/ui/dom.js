@@ -20,6 +20,7 @@ const SELECTORS = {
   startCountdown: "#start-countdown",
   themeToggle: "#theme-toggle",
   restart: "#restart",
+  newStart: "#new-start",
   optionsMenu: ".options-menu",
   optionsSummary: ".options-menu summary",
   practiceCard: ".practice-card",

@@ -89,6 +89,7 @@ export function bindEvents(els, actions, { doc = document, win = window, signal 
 
   // Session controls.
   els.restart.addEventListener("click", actions.restart, options);
+  els.newStart.addEventListener("click", actions.newStart, options);
   els.startCountdown.addEventListener("click", actions.start, options);
 
   // Settings.

@@ -1,56 +1,109 @@
 /**
  * Renders the card header and the code display.
+ *
+ * Rendering contract (P1): the spans are built once per target (build), then
+ * each edit only patches the inclusive index range it changed, which always
+ * includes the old and the new cursor (patch). Text is set with textContent, so
+ * no HTML string is ever built from file content (R1).
+ *
+ * Each line is wrapped in a block-level span. A class change then only re-lays
+ * out its own line instead of the whole file, which keeps keystrokes cheap on
+ * long imports.
  */
-import { syntaxClassAt } from "../syntax/tokenize.js";
+import { LANGUAGES } from "../syntax/languages.js";
 import { CHAR, charState } from "../typing.js";
-
-function escapeHtml(value) {
-  return value.replace(
-    /[&<>"']/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[c],
-  );
-}
 
 /** Whitespace classes let CSS draw ↵ · → at the cursor and on mistakes (U1). */
 const WHITESPACE_CLASS = { " ": "ws-space", "\t": "ws-tab", "\n": "ws-nl" };
 
 const STATE_CLASS = {
   [CHAR.PENDING]: "",
-  [CHAR.CORRECT]: "correct",
-  [CHAR.INCORRECT]: "incorrect",
+  [CHAR.CORRECT]: " correct",
+  [CHAR.INCORRECT]: " incorrect",
 };
 
 function renderHeader(els, { item, target }) {
-  const start = target.startLine ? ` · starts at line ${target.startLine + 1}` : "";
+  const from = target.startLine ? ` · from line ${target.lineNumbers[0]}` : "";
   els.repoName.textContent = item.repo;
-  els.repoPath.textContent = ` ${item.path}${start}`;
-  els.repoIcon.textContent = item.icon;
+  els.repoPath.textContent = ` ${item.path}${from}`;
+  els.repoIcon.textContent = (LANGUAGES[target.language] ?? LANGUAGES.generic).badge;
   els.lineCount.textContent = `${String(target.lineCount).padStart(2, "0")} lines`;
 }
 
-export function renderTarget(els, state, prev) {
-  const targetChanged = !prev || state.targetVersion !== prev.targetVersion;
-  if (targetChanged) renderHeader(els, state);
-  if (!targetChanged && state.session === prev.session) return;
+export function createTargetView(els) {
+  let spans = [];
+  let baseClasses = [];
+  let lineHeight = 0;
 
-  const { session, target } = state;
-  const cursor = session.typed.length;
-  els.display.innerHTML = target.chars
-    .map((char, i) => {
-      const stateClass =
-        i === cursor ? "current" : STATE_CLASS[charState(target.chars, session.typed, i)];
-      const classes = ["char", stateClass, WHITESPACE_CLASS[char], syntaxClassAt(target.ranges, i)]
-        .filter(Boolean)
-        .join(" ");
-      return `<span class="${classes}">${escapeHtml(char)}</span>`;
-    })
-    .join("");
-  const current = els.display.querySelector(".current");
-  if (current) {
-    const lineHeight = parseFloat(getComputedStyle(els.display).lineHeight);
-    const currentLine = target.chars.slice(0, cursor).filter((c) => c === "\n").length;
-    const offset = currentLine * lineHeight - els.display.clientHeight / 2;
-    els.display.scrollTop = Math.max(0, offset + lineHeight);
+  function classFor(index, target, session) {
+    if (index === session.typed.length) return `${baseClasses[index]} current`;
+    return baseClasses[index] + STATE_CLASS[charState(target.chars, session.typed, index)];
   }
-  els.clickHint.style.opacity = cursor ? "0" : "1";
+
+  function build({ target, session }) {
+    const fragment = document.createDocumentFragment();
+    const newLine = () => {
+      const line = document.createElement("span");
+      line.className = "line";
+      fragment.append(line);
+      return line;
+    };
+    let line = newLine();
+    spans = new Array(target.chars.length);
+    baseClasses = new Array(target.chars.length);
+    for (let i = 0; i < target.chars.length; i += 1) {
+      const char = target.chars[i];
+      const type = target.types[i];
+      let base = "char";
+      if (WHITESPACE_CLASS[char]) base += ` ${WHITESPACE_CLASS[char]}`;
+      if (type) base += ` syntax-${type}`;
+      baseClasses[i] = base;
+      const span = document.createElement("span");
+      span.className = classFor(i, target, session);
+      span.textContent = char;
+      spans[i] = span;
+      line.append(span);
+      if (char === "\n") line = newLine();
+    }
+    els.display.replaceChildren(fragment);
+    els.display.scrollTop = 0;
+    // Read once per target, never per keystroke (P2).
+    lineHeight = parseFloat(getComputedStyle(els.display).lineHeight) || 0;
+  }
+
+  function patch({ target, session }, from, to) {
+    const last = Math.min(to, spans.length - 1);
+    for (let i = Math.max(0, from); i <= last; i += 1) {
+      const next = classFor(i, target, session);
+      if (spans[i].className !== next) spans[i].className = next;
+    }
+  }
+
+  /** Keeps the cursor near the middle; offsetTop is correct with wrapped lines (B9). */
+  function scrollToCursor({ session }) {
+    const span = spans[session.typed.length];
+    if (!span) return;
+    const top = span.offsetTop - els.display.clientHeight / 2 + lineHeight;
+    els.display.scrollTop = Math.max(0, top);
+  }
+
+  function render(state, prev) {
+    if (!prev || state.targetVersion !== prev.targetVersion) {
+      renderHeader(els, state);
+      build(state);
+    } else if (state.session !== prev.session) {
+      const edited = state.edit && state.edit !== prev.edit ? state.edit : null;
+      const from = edited ? edited.from : 0;
+      const to = edited
+        ? edited.to
+        : Math.max(prev.session.typed.length, state.session.typed.length);
+      patch(state, from, to);
+      scrollToCursor(state);
+    } else {
+      return;
+    }
+    els.clickHint.style.opacity = state.session.typed.length ? "0" : "1";
+  }
+
+  return { render };
 }

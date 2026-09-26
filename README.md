@@ -27,3 +27,13 @@ npm run lint
 npm run build     # static site in dist/
 npm run preview   # serve dist/ locally
 ```
+
+## Syntax highlighting
+
+Highlighting uses a small built-in tokenizer (`src/syntax/tokenize.js`) with rule sets for
+Python, C/C++, Rust, JavaScript, TypeScript, Go, Java and shell (`src/syntax/languages.js`).
+Other files fall back to a generic rule set.
+
+Decision (D3): the custom tokenizer was extended rather than adopting Prism. It keeps the app
+dependency-free and is enough for a handful of languages. Revisit this if more than about six
+more languages are wanted.

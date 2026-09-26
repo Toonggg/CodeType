@@ -21,6 +21,8 @@ export function renderControls(els, state, prev) {
   }
   if (!before || settings.randomStart !== before.randomStart) {
     setToggle(els.randomStartToggle, settings.randomStart, "↝ Random start");
+    // "New start" rerolls; Restart retries the same start (U8).
+    els.newStart.hidden = !settings.randomStart;
   }
   if (!before || settings.autoIndent !== before.autoIndent) {
     setToggle(els.autoIndentToggle, settings.autoIndent, "⇥ Auto-indent");
