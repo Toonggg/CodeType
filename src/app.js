@@ -12,6 +12,7 @@ import {
   STORAGE_KEYS,
 } from "./constants.js";
 import { EXAMPLES } from "./data/examples.js";
+import { historyKey, loadHistory, recordRun, saveHistory } from "./history.js";
 import { ImportError } from "./import/errors.js";
 import { fetchGitHubFile, parseGitHubUrl } from "./import/github.js";
 import { readLocalFile } from "./import/local.js";
@@ -26,11 +27,13 @@ import {
 } from "./practice.js";
 import { clampCountdown, loadSettings, saveSetting } from "./settings.js";
 import { EVENT, STATUS, acceptsInput, createStore, effectsFor, transition } from "./state.js";
+import { computeStats } from "./stats.js";
 import { readJSON, removeKey, writeJSON } from "./storage.js";
 import { createStopwatch } from "./timer.js";
 import { applyTyped, autoIndent, createSession, isComplete, smartTab, toChars } from "./typing.js";
 import { bindEvents } from "./ui/events.js";
 import { renderImport } from "./ui/renderImport.js";
+import { renderResults } from "./ui/renderResults.js";
 import { populateSourceOptions, renderControls } from "./ui/renderControls.js";
 import { renderStats } from "./ui/renderStats.js";
 import { renderStatus } from "./ui/renderStatus.js";
@@ -108,6 +111,10 @@ export function createApp(
     importBusy: false,
     importError: null,
     notices: [],
+    /** Recent runs and best speeds (history.js). */
+    history: loadHistory(),
+    /** { run, isBest, previousBest } while the completed run is shown, else null. */
+    lastResult: null,
   });
 
   // --- Timers (B15: every timer id is cleared and nulled together) ------------
@@ -182,7 +189,12 @@ export function createApp(
     els.input.tabIndex = status === STATUS.COMPLETE ? -1 : 0;
     doc.body.classList.toggle("challenge-active", effects.focusMode);
     // Update state before moving focus: focus/blur handlers dispatch events too.
-    store.set({ status, elapsedMs: stopwatch.elapsedMs() });
+    // Leaving the complete status hides its results.
+    store.set({
+      status,
+      elapsedMs: stopwatch.elapsedMs(),
+      lastResult: status === STATUS.COMPLETE ? store.get().lastResult : null,
+    });
     if (effects.countdownActive) startCountdown(payload.seconds);
     if (effects.focus === "input" && doc.activeElement !== els.input) els.input.focus();
     if (effects.focus === "release" && doc.activeElement === els.input) els.input.blur();
@@ -287,7 +299,27 @@ export function createApp(
     dispatch(EVENT.TYPE);
     store.set({ session, edit: { from, to }, elapsedMs: stopwatch.elapsedMs() });
     updatePunishment();
-    if (isComplete(session)) dispatch(EVENT.FINISH);
+    if (isComplete(session) && dispatch(EVENT.FINISH) === STATUS.COMPLETE) recordResult();
+  }
+
+  /** Stores the finished run in the history and shows the results (U2). */
+  function recordResult() {
+    const { item, session, history, elapsedMs } = store.get();
+    const stats = computeStats(session, elapsedMs, { final: true });
+    const run = {
+      key: historyKey(item),
+      label: item.label ?? item.filename,
+      wpm: stats.wpm,
+      accuracy: stats.accuracy,
+      elapsedMs: Math.round(elapsedMs),
+      errors: stats.errors,
+      corrections: stats.corrections,
+      chars: session.target.length,
+      at: new Date().toISOString(),
+    };
+    const { history: next, isBest, previousBest } = recordRun(history, run);
+    saveHistory(next);
+    store.set({ history: next, lastResult: { run, isBest, previousBest } });
   }
 
   /**
@@ -534,6 +566,7 @@ export function createApp(
     (_, state, prev) => targetView.render(state, prev),
     renderStats,
     renderStatus,
+    renderResults,
   ];
   const lifetime = new AbortController();
 

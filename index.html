@@ -342,6 +342,30 @@
           <div class="click-hint">click anywhere to start typing</div>
         </div>
 
+        <!-- Shown on completion (U2); the status line announces the headline result. -->
+        <section id="results" class="results" aria-labelledby="results-title" hidden>
+          <div class="results-head">
+            <h2 id="results-title" class="results-title">Run complete</h2>
+            <span id="results-badge" class="results-badge" hidden></span>
+          </div>
+          <p id="results-summary" class="results-summary"></p>
+          <p id="results-compare" class="results-compare"></p>
+          <table class="results-history">
+            <caption class="label-caps">
+              RECENT RUNS OF THIS SNIPPET
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">Speed</th>
+                <th scope="col">Accuracy</th>
+                <th scope="col">Time</th>
+              </tr>
+            </thead>
+            <tbody id="results-runs"></tbody>
+          </table>
+        </section>
+
         <div class="stats">
           <div class="stat">
             <span class="stat-label label-caps">SPEED</span>
@@ -373,6 +397,10 @@
             >
               <span id="progress-bar" class="progress-bar"></span>
             </div>
+          </div>
+          <div class="stat">
+            <span class="stat-label label-caps">BEST</span>
+            <strong class="stat-value"><span id="best">–</span> <small>WPM</small></strong>
           </div>
           <div class="stats-actions">
             <button id="new-start" class="btn btn--compact" type="button" hidden>
@@ -429,6 +457,10 @@
           <p>
             Use <strong>Local file</strong> or paste a file URL with <strong>GitHub file</strong>.
             CodeType detects the file extension and applies the closest available syntax colors.
+          </p>
+          <p>
+            When you finish, CodeType shows your result and keeps your last 20 runs and your best
+            speed for each snippet in this browser only.
           </p>
         </div>
       </section>

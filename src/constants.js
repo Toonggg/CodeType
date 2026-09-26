@@ -32,6 +32,9 @@ export const PRACTICE_MAX_LINES = 400;
 /** GitHub requests are aborted after this long (R3). */
 export const FETCH_TIMEOUT_MS = 10_000;
 
+/** The run history keeps this many most recent runs (U2). */
+export const HISTORY_MAX_RUNS = 20;
+
 /** localStorage keys. Values stay compatible with earlier versions of the app. */
 export const STORAGE_KEYS = Object.freeze({
   theme: "codetype-theme",
@@ -41,4 +44,5 @@ export const STORAGE_KEYS = Object.freeze({
   lastImport: "codetype-last-import",
   autoIndent: "codetype-auto-indent",
   skipComments: "codetype-skip-comments",
+  history: "codetype-history",
 });

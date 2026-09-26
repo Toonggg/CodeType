@@ -47,6 +47,12 @@ const SELECTORS = {
   accuracy: "#accuracy",
   time: "#time",
   progress: "#progress",
+  best: "#best",
+  results: "#results",
+  resultsBadge: "#results-badge",
+  resultsSummary: "#results-summary",
+  resultsCompare: "#results-compare",
+  resultsRuns: "#results-runs",
   progressTrack: "#progress-track",
   progressBar: "#progress-bar",
 };
