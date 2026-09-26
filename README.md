@@ -273,6 +273,30 @@ enforces this and completes every example in the app.
   `random-start`, `countdown`, `auto-indent`, `skip-comments`, `last-import`, `history`. Every
   read tolerates missing, corrupt or blocked storage.
 
+## Final verification (step 48, 2026-09-26)
+
+Run in Chrome 154 (headless, macOS 27) against the production build served by `vite preview`,
+so everything ran under the Content-Security-Policy. Real key events, file-input uploads and
+a live GitHub request were driven through the DevTools protocol.
+
+| #   | Check                                                                                                                                           | Result                                                                                        |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1   | The C++ example completes using only Tab for indentation, auto-indent off (B1)                                                                  | Pass: 5 Tab presses, complete                                                                 |
+| 2   | A typed space where a letter belongs turns red (B2)                                                                                             | Pass: `incorrect` class and colour                                                            |
+| 3   | Typing during the countdown is ignored; one Escape cancels it (B3, B7)                                                                          | Pass                                                                                          |
+| 4   | Completion: indicator stops, stats freeze, Backspace is inert, visible complete state (B5)                                                      | Pass                                                                                          |
+| 5   | A file with `*ptr = x;`, `#include`, `#[derive]` and `"src/*.ts"` keeps every line; only the comment-only line is skipped (B4)                  | Pass                                                                                          |
+| 6   | The same file imports twice in a row (B12); a 10 MB file is refused with a message (B13)                                                        | Pass                                                                                          |
+| 7   | A GitHub link with `#L10-L20` loads exactly those lines (B20)                                                                                   | Pass: 11 lines, byte-identical                                                                |
+| 8   | No wrong-theme flash on load (B19), with 300 ms latency, for saved dark/OS light, saved light/OS dark, and nothing saved with either OS setting | Pass: every painted frame after navigation has the expected theme                             |
+| 9   | Shift+Tab leaves the typing area; Escape when idle releases it (A1)                                                                             | Pass                                                                                          |
+| 10  | A 500-line import (400-line window, 11,630 character spans) types smoothly (P1)                                                                 | Pass: 299 keystrokes, input handling plus forced layout median 0.4 ms, p95 0.6 ms, max 0.9 ms |
+| 11  | Reduced motion: no shake or pulse (A6); contrast of text and focus indicators (A4)                                                              | Pass: 94 token pairs meet AA in both themes; axe reports no violations                        |
+| 12  | `npm test`, `npm run lint`, `npm run format:check`, `npm run build`                                                                             | Pass: 309 tests                                                                               |
+
+Not covered: browsers other than Chrome, real phones and on-screen keyboards, IMEs and dead
+keys, and the VoiceOver pass. Item 10 times the input handler and layout, not painting.
+
 ## Known limitations
 
 - **GitHub branch names containing `/`** cannot be told apart from the file path. The file still
@@ -286,4 +310,5 @@ enforces this and completes every example in the app.
   composition are not treated as shortcuts, but the composed text is still read as typing.
 - Best speeds are per snippet, regardless of Random start, Skip comments or the chosen line
   range; imported files are matched by file name.
-- The VoiceOver pass in the accessibility record above has not been done yet.
+- Verified in Chrome only; the VoiceOver pass in the accessibility record above has not been
+  done yet.
