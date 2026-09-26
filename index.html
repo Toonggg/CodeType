@@ -57,7 +57,46 @@
             <div class="option-row">
               <span class="option-label">IMPORT CODE</span>
               <button id="import-button" class="import-button" type="button">＋ Local file</button>
-              <button id="github-button" class="import-button" type="button">⌘ GitHub file</button>
+              <button
+                id="github-button"
+                class="import-button"
+                type="button"
+                aria-expanded="false"
+                aria-controls="github-form"
+              >
+                ⌘ GitHub file
+              </button>
+              <button id="forget-import" class="import-button" type="button" disabled>
+                ✕ Forget import
+              </button>
+            </div>
+            <!-- Inside the panel so its programmatic click does not close the menu. -->
+            <input id="file-input" type="file" hidden />
+            <form id="github-form" class="github-form" hidden novalidate>
+              <label class="visually-hidden" for="github-url">GitHub file URL</label>
+              <input
+                id="github-url"
+                type="url"
+                inputmode="url"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+                placeholder="https://github.com/user/repo/blob/main/file.py"
+              />
+              <button id="github-load" class="import-button" type="submit">Load</button>
+            </form>
+            <p id="import-error" class="form-error" role="alert" data-empty="true"></p>
+            <div id="range-row" class="option-row" hidden>
+              <span class="option-label">LINES</span>
+              <label class="number-control"
+                >FROM
+                <input id="range-start" type="number" min="1" step="1" inputmode="numeric" />
+              </label>
+              <label class="number-control"
+                >TO
+                <input id="range-end" type="number" min="1" step="1" inputmode="numeric" />
+              </label>
+              <span id="range-total" class="range-total"></span>
             </div>
             <div class="option-row">
               <span class="option-label">TYPING</span>
@@ -68,6 +107,14 @@
                 aria-pressed="true"
               >
                 ⇥ Auto-indent on
+              </button>
+              <button
+                id="skip-comments-toggle"
+                class="import-button"
+                type="button"
+                aria-pressed="true"
+              >
+                ⌗ Skip comments on
               </button>
             </div>
             <div class="option-row">
@@ -88,7 +135,7 @@
               >
                 ↝ Random start off
               </button>
-              <label class="countdown-control"
+              <label class="number-control"
                 >COUNTDOWN
                 <input
                   id="countdown-seconds"
@@ -107,17 +154,20 @@
             </div>
           </div>
         </details>
-        <input id="file-input" type="file" hidden />
-        <div id="github-import" class="github-import" hidden>
-          <input
-            id="github-url"
-            type="url"
-            placeholder="https://github.com/user/repo/blob/main/file.py"
-            aria-label="GitHub file URL"
-          />
-          <button id="github-load" class="import-button" type="button">Load</button>
-        </div>
       </section>
+
+      <div id="notice" class="notice" data-empty="true">
+        <p id="notice-text" role="status"></p>
+        <button
+          id="notice-dismiss"
+          class="notice-dismiss"
+          type="button"
+          aria-label="Dismiss message"
+          hidden
+        >
+          ×
+        </button>
+      </div>
 
       <section class="practice-card">
         <div class="card-topline">

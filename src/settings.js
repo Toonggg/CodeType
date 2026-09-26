@@ -20,6 +20,7 @@ export function loadSettings() {
     randomStart: readFlag(STORAGE_KEYS.randomStart, false),
     countdownSeconds: clampCountdown(readString(STORAGE_KEYS.countdown, "0")),
     autoIndent: readFlag(STORAGE_KEYS.autoIndent, true),
+    skipComments: readFlag(STORAGE_KEYS.skipComments, true),
   };
 }
 
@@ -36,6 +37,8 @@ export function saveSetting(name, value) {
       return writeString(STORAGE_KEYS.countdown, String(value));
     case "autoIndent":
       return writeFlag(STORAGE_KEYS.autoIndent, value);
+    case "skipComments":
+      return writeFlag(STORAGE_KEYS.skipComments, value);
     default:
       throw new Error(`Unknown setting: ${name}`);
   }

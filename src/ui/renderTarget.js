@@ -22,10 +22,12 @@ const STATE_CLASS = {
   [CHAR.INCORRECT]: " incorrect",
 };
 
-function renderHeader(els, { item, target }) {
+function renderHeader(els, { item, target, document }) {
+  const range = item.range ? ` · lines ${item.range.start}–${item.range.end}` : "";
   const from = target.startLine ? ` · from line ${target.lineNumbers[0]}` : "";
+  const comments = document.commentsKept ? " · only comments here" : "";
   els.repoName.textContent = item.repo;
-  els.repoPath.textContent = ` ${item.path}${from}`;
+  els.repoPath.textContent = ` ${item.path}${range}${from}${comments}`;
   els.repoIcon.textContent = (LANGUAGES[target.language] ?? LANGUAGES.generic).badge;
   els.lineCount.textContent = `${String(target.lineCount).padStart(2, "0")} lines`;
 }

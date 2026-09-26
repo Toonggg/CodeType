@@ -80,3 +80,18 @@ export function toCodePointTypes(text, unitTypes) {
 export function classifyChars(text, language) {
   return toCodePointTypes(text, tokenize(text, language));
 }
+
+/**
+ * Splits text into lines, each with its code points and their token types. The
+ * whole text is tokenized at once, so multi-line tokens are typed correctly on
+ * every line they span.
+ */
+export function tokenizeLines(text, language) {
+  const unitTypes = tokenize(text, language);
+  let offset = 0;
+  return text.split("\n").map((line) => {
+    const types = toCodePointTypes(line, unitTypes.slice(offset, offset + line.length));
+    offset += line.length + 1;
+    return { text: line, chars: Array.from(line), types };
+  });
+}

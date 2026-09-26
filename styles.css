@@ -200,13 +200,12 @@ h1 em {
 .source-control .select-wrap {
   width: 100%;
 }
-.github-import {
+.github-form {
   display: flex;
   gap: 8px;
-  flex: 1 1 390px;
-  max-width: 480px;
+  padding: 0 0 8px 100px;
 }
-.github-import input {
+.github-form input {
   min-width: 0;
   flex: 1;
   height: 35px;
@@ -282,12 +281,12 @@ h1 em {
   font: 9px var(--mono);
   letter-spacing: 0.1em;
 }
-body.dark .github-import input {
+body.dark .github-form input {
   border-color: #b1bac4;
   background: #21262d;
   color: #e6edf3;
 }
-.countdown-control {
+.number-control {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -297,7 +296,7 @@ body.dark .github-import input {
   letter-spacing: 0.08em;
   white-space: nowrap;
 }
-.countdown-control input {
+.number-control input {
   width: 52px;
   height: 35px;
   border: 1px solid #6f7d6b;
@@ -307,7 +306,7 @@ body.dark .github-import input {
   padding: 0 8px;
   font: 12px var(--mono);
 }
-body.dark .countdown-control input {
+body.dark .number-control input {
   border-color: #b1bac4;
   background: #21262d;
   color: #e6edf3;
@@ -391,8 +390,71 @@ select {
 }
 #punishment-toggle,
 #random-start-toggle,
-#auto-indent-toggle {
+#auto-indent-toggle,
+#skip-comments-toggle,
+#forget-import {
   min-width: 164px;
+}
+.import-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+.range-total {
+  color: var(--muted);
+  font: 10px var(--mono);
+  letter-spacing: 0.08em;
+}
+.form-error {
+  margin: 0 0 8px 100px;
+  color: #a52217;
+  font-size: 12px;
+}
+body.dark .form-error {
+  color: #ff7b72;
+}
+.form-error[data-empty="true"],
+.notice[data-empty="true"] {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  height: 0;
+  overflow: hidden;
+}
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -5px 0 17px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--coral);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 13px;
+}
+.notice p {
+  margin: 0;
+  flex: 1;
+}
+.notice-dismiss {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 .start-countdown {
   min-width: 92px;
@@ -426,7 +488,8 @@ body.dark #punishment-toggle[aria-pressed="true"],
 #punishment-toggle[aria-pressed="true"],
 body.dark #random-start-toggle[aria-pressed="true"],
 #random-start-toggle[aria-pressed="true"],
-#auto-indent-toggle[aria-pressed="true"] {
+#auto-indent-toggle[aria-pressed="true"],
+#skip-comments-toggle[aria-pressed="true"] {
   background: #fff0d6;
   border-color: #c77d00;
   color: #8a4b00;
@@ -437,7 +500,8 @@ body.dark #punishment-toggle[aria-pressed="true"] {
   color: #ffd580;
 }
 body.dark #random-start-toggle[aria-pressed="true"],
-body.dark #auto-indent-toggle[aria-pressed="true"] {
+body.dark #auto-indent-toggle[aria-pressed="true"],
+body.dark #skip-comments-toggle[aria-pressed="true"] {
   background: #1f3a5f;
   border-color: #58a6ff;
   color: #c6e3ff;
@@ -944,9 +1008,8 @@ select:focus-visible {
   .import-button {
     margin-top: 0;
   }
-  .github-import {
-    flex-basis: 100%;
-    max-width: none;
+  .github-form {
+    padding-left: 0;
   }
   .code-window {
     padding: 52px 22px 38px;

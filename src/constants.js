@@ -23,6 +23,15 @@ export const CHARS_PER_WORD = 5;
 /** WPM is shown as 0 until this much time has passed, to avoid absurd early spikes. */
 export const MIN_WPM_ELAPSED_MS = 1500;
 
+/** Imports larger than this are refused (B13). */
+export const IMPORT_MAX_BYTES = 1_000_000;
+
+/** At most this many lines are practiced at once; longer files get a line range (B13). */
+export const PRACTICE_MAX_LINES = 400;
+
+/** GitHub requests are aborted after this long (R3). */
+export const FETCH_TIMEOUT_MS = 10_000;
+
 /** localStorage keys. Values stay compatible with earlier versions of the app. */
 export const STORAGE_KEYS = Object.freeze({
   theme: "codetype-theme",
@@ -31,4 +40,5 @@ export const STORAGE_KEYS = Object.freeze({
   countdown: "codetype-countdown",
   lastImport: "codetype-last-import",
   autoIndent: "codetype-auto-indent",
+  skipComments: "codetype-skip-comments",
 });

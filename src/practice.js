@@ -10,23 +10,59 @@
  * joined with newlines, as code-point arrays.
  */
 import { RANDOM_START_MIN_LINES } from "./constants.js";
+import { filterCommentLines } from "./import/comments.js";
 import { detectLanguage } from "./syntax/languages.js";
-import { toCodePointTypes, tokenize } from "./syntax/tokenize.js";
-import { toChars } from "./typing.js";
+import { tokenizeLines } from "./syntax/tokenize.js";
 
 export function languageOf(item) {
   return item.language || detectLanguage(item.filename || item.path || item.repo || "");
 }
 
 export function createDocument(text, language) {
-  const unitTypes = tokenize(text, language);
-  let offset = 0;
-  const lines = text.split("\n").map((line, index) => {
-    const types = toCodePointTypes(line, unitTypes.slice(offset, offset + line.length));
-    offset += line.length + 1;
-    return { number: index + 1, text: line, chars: toChars(line), types };
-  });
-  return { language, lines };
+  const lines = tokenizeLines(text, language).map((line, index) => ({
+    ...line,
+    number: index + 1,
+  }));
+  return { language, lines, totalLines: lines.length };
+}
+
+const isBlank = (line) => line.text.trim() === "";
+
+/**
+ * Selects the lines to practice from a document, keeping original line numbers:
+ * - `range` ({ start, end }, 1-based and inclusive) limits the lines,
+ * - `skipComments` removes comment-only lines,
+ * - runs of three or more blank lines collapse to one, and blank lines at the
+ *   start and end are dropped.
+ * When skipping comments would leave nothing, the comments are kept and
+ * `commentsKept` is true.
+ */
+export function selectLines(document, { range = null, skipComments = false } = {}) {
+  let lines = range
+    ? document.lines.filter((line) => line.number >= range.start && line.number <= range.end)
+    : document.lines;
+  let commentsKept = false;
+  if (skipComments) {
+    const filtered = filterCommentLines(lines);
+    if (filtered.some((line) => !isBlank(line))) lines = filtered;
+    else commentsKept = lines.some((line) => !isBlank(line));
+  }
+  // Blank lines are held back until the next content line: a run of three or more
+  // collapses to one, and runs at the start or end are dropped.
+  const collapsed = [];
+  let pendingBlank = [];
+  for (const line of lines) {
+    if (isBlank(line)) {
+      pendingBlank.push(line);
+      continue;
+    }
+    if (collapsed.length) {
+      collapsed.push(...(pendingBlank.length >= 3 ? pendingBlank.slice(0, 1) : pendingBlank));
+    }
+    pendingBlank = [];
+    collapsed.push(line);
+  }
+  return { ...document, lines: collapsed, commentsKept };
 }
 
 /**

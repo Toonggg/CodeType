@@ -112,22 +112,33 @@ export function bindEvents(els, actions, { doc = document, win = window, signal 
   els.importButton.addEventListener("click", () => els.fileInput.click(), options);
   els.fileInput.addEventListener(
     "change",
-    () => actions.importLocalFile(els.fileInput.files[0]),
-    options,
-  );
-  els.githubButton.addEventListener(
-    "click",
     () => {
-      els.githubImport.hidden = !els.githubImport.hidden;
-      if (!els.githubImport.hidden) els.githubUrl.focus();
+      const [file] = els.fileInput.files;
+      // Reset so choosing the same file again fires "change" again (B12).
+      els.fileInput.value = "";
+      actions.importLocalFile(file);
     },
     options,
   );
-  els.githubLoad.addEventListener(
-    "click",
-    () => actions.importGithub(els.githubUrl.value),
+  els.githubButton.addEventListener("click", actions.toggleGithubForm, options);
+  els.githubForm.addEventListener(
+    "submit",
+    (event) => {
+      event.preventDefault();
+      actions.importGithub(els.githubUrl.value);
+    },
     options,
   );
+  els.forgetImport.addEventListener("click", actions.forgetImport, options);
+  for (const input of [els.rangeStart, els.rangeEnd]) {
+    input.addEventListener(
+      "change",
+      () => actions.setRange(els.rangeStart.value, els.rangeEnd.value),
+      options,
+    );
+  }
+  els.skipCommentsToggle.addEventListener("click", actions.toggleSkipComments, options);
+  els.noticeDismiss.addEventListener("click", actions.dismissNotice, options);
 
   // Page-level.
   doc.addEventListener(

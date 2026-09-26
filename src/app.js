@@ -1,33 +1,64 @@
 /**
  * The controller. It owns the store, the timers and every side effect of a status
  * change, and exposes the actions that DOM events are mapped to.
+ *
+ * Data flow: DOM event → action (here) → store update / dispatch() → renderers.
  */
-import { DOUBLE_ESCAPE_MS, SHAKE_MS, STATS_TICK_MS, STORAGE_KEYS } from "./constants.js";
+import {
+  DOUBLE_ESCAPE_MS,
+  PRACTICE_MAX_LINES,
+  SHAKE_MS,
+  STATS_TICK_MS,
+  STORAGE_KEYS,
+} from "./constants.js";
 import { EXAMPLES } from "./data/examples.js";
-import { codeOnly } from "./import/comments.js";
-import { buildTarget, chooseStartLine, createDocument, languageOf } from "./practice.js";
+import { ImportError } from "./import/errors.js";
+import { fetchGitHubFile, parseGitHubUrl } from "./import/github.js";
+import { readLocalFile } from "./import/local.js";
+import { clampRange, prepareImport } from "./import/prepare.js";
+import { migrateImportRecord } from "./import/record.js";
+import {
+  buildTarget,
+  chooseStartLine,
+  createDocument,
+  languageOf,
+  selectLines,
+} from "./practice.js";
 import { clampCountdown, loadSettings, saveSetting } from "./settings.js";
 import { EVENT, STATUS, acceptsInput, createStore, effectsFor, transition } from "./state.js";
 import { readJSON, removeKey, writeJSON } from "./storage.js";
 import { createStopwatch } from "./timer.js";
 import { applyTyped, autoIndent, createSession, isComplete, smartTab, toChars } from "./typing.js";
 import { bindEvents } from "./ui/events.js";
+import { renderImport } from "./ui/renderImport.js";
 import { populateSourceOptions, renderControls } from "./ui/renderControls.js";
 import { renderStats } from "./ui/renderStats.js";
 import { renderStatus } from "./ui/renderStatus.js";
 import { createTargetView } from "./ui/renderTarget.js";
 import { renderTheme } from "./ui/theme.js";
 
+/** Loads the saved import, migrating old records and discarding unusable ones. */
 function loadImport() {
   const saved = readJSON(STORAGE_KEYS.lastImport);
-  if (saved && typeof saved.code === "string") return saved;
-  if (saved) removeKey(STORAGE_KEYS.lastImport);
-  return null;
+  if (!saved) return null;
+  const record = migrateImportRecord(saved);
+  if (!record) removeKey(STORAGE_KEYS.lastImport);
+  else if (record.version !== saved.version) writeJSON(STORAGE_KEYS.lastImport, record);
+  return record;
 }
+
+const messageOf = (error) =>
+  error instanceof ImportError ? error.message : "Something went wrong while importing.";
 
 export function createApp(
   els,
-  { doc = document, win = window, now = () => performance.now(), random = Math.random } = {},
+  {
+    doc = document,
+    win = window,
+    now = () => performance.now(),
+    random = Math.random,
+    fetchImpl = (...args) => win.fetch(...args),
+  } = {},
 ) {
   const stopwatch = createStopwatch(now);
   let tickId = null;
@@ -35,10 +66,26 @@ export function createApp(
   let shakeId = null;
   let lastEscape = { at: -Infinity, status: null };
 
+  // The full document of the current item is tokenized once and reused when the
+  // range or the skip-comments setting changes.
+  let documentCache = { item: null, document: null };
+  function fullDocumentFor(item) {
+    if (documentCache.item !== item) {
+      documentCache = { item, document: createDocument(item.code, languageOf(item)) };
+    }
+    return documentCache.document;
+  }
+  function practiceDocumentFor(item, settings) {
+    return selectLines(fullDocumentFor(item), {
+      range: item.range ?? null,
+      skipComments: settings.skipComments,
+    });
+  }
+
   const settings = loadSettings();
   const savedImport = loadImport();
   const firstItem = savedImport ?? EXAMPLES[0];
-  const firstDocument = createDocument(firstItem.code, languageOf(firstItem));
+  const firstDocument = practiceDocumentFor(firstItem, settings);
   const firstStart = settings.randomStart ? chooseStartLine(firstDocument.lines, { random }) : 0;
   const firstTarget = buildTarget(firstDocument, firstStart);
   const store = createStore({
@@ -46,7 +93,7 @@ export function createApp(
     focused: false,
     countdownRemaining: 0,
     item: firstItem,
-    /** The whole source, tokenized once (practice.js). */
+    /** The lines being practiced, tokenized over the whole file (practice.js). */
     document: firstDocument,
     /** What is typed: the document from the start line on. */
     target: firstTarget,
@@ -56,7 +103,11 @@ export function createApp(
     edit: null,
     elapsedMs: 0,
     settings,
-    hasImport: Boolean(savedImport),
+    savedImport,
+    githubFormOpen: false,
+    importBusy: false,
+    importError: null,
+    notices: [],
   });
 
   // --- Timers (B15: every timer id is cleared and nulled together) ------------
@@ -168,11 +219,17 @@ export function createApp(
     dispatch(event);
   }
 
+  /** Rebuilds the practice lines of the current item (range or settings changed). */
+  function refreshDocument() {
+    const { item, settings: current } = store.get();
+    const document = practiceDocumentFor(item, current);
+    setTarget(document, pickStart(document));
+  }
+
   /** Makes an item the current practice source (Q17). */
   function selectItem(item) {
-    const document = createDocument(item.code, languageOf(item));
     store.set({ item });
-    setTarget(document, pickStart(document));
+    refreshDocument();
   }
 
   // --- Typing ----------------------------------------------------------------
@@ -198,10 +255,10 @@ export function createApp(
     }
     const previous = state.session;
     const applied = applyTyped(previous, toChars(rawValue));
+    const { from } = applied;
     let { session, to } = applied;
 
     // Auto-indent (U7): a single newline was just typed at the end.
-    const { from } = applied;
     const insertedNewline =
       from === previous.typed.length &&
       session.typed.length === from + 1 &&
@@ -257,6 +314,12 @@ export function createApp(
     saveSetting("autoIndent", enabled);
   }
 
+  function setSkipComments(enabled) {
+    updateSettings({ skipComments: enabled });
+    saveSetting("skipComments", enabled);
+    refreshDocument();
+  }
+
   function setCountdown(value) {
     const seconds = clampCountdown(value);
     updateSettings({ countdownSeconds: seconds });
@@ -270,56 +333,94 @@ export function createApp(
     saveSetting("theme", theme);
   }
 
-  // --- Imports (legacy pipeline, replaced in Phase 5) -------------------------
+  // --- Imports (Phase 5 pipeline) ----------------------------------------------
 
-  function useImport(item) {
-    writeJSON(STORAGE_KEYS.lastImport, item);
-    store.set({ hasImport: true });
-    selectItem(item);
+  /** Saves and selects a prepared import; the text stays usable if storage is full (B13). */
+  function useImport(record, notices = []) {
+    const messages = [...notices];
+    if (!writeJSON(STORAGE_KEYS.lastImport, record)) {
+      messages.push("Loaded, but the file is too large to remember between sessions.");
+    }
+    store.set({ savedImport: record, importError: null, notices: messages });
+    els.optionsMenu.open = false;
+    selectItem(record);
+  }
+
+  async function runImport(task) {
+    if (store.get().importBusy) return;
+    store.set({ importBusy: true, importError: null });
+    try {
+      await task();
+    } catch (error) {
+      store.set({ importError: messageOf(error) });
+    } finally {
+      store.set({ importBusy: false });
+    }
   }
 
   function importLocalFile(file) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      useImport({
-        id: "custom",
+    if (!file) return Promise.resolve();
+    return runImport(async () => {
+      const text = await readLocalFile(file);
+      const { record, notices } = prepareImport(text, {
+        source: "local",
         filename: file.name,
         repo: file.name,
-        path: "/ local file · comments skipped",
-        icon: "↥",
-        code: codeOnly(String(reader.result)),
+        path: "/ local file",
       });
-    };
-    reader.readAsText(file);
+      useImport(record, notices);
+    });
   }
 
-  async function importGithub(url) {
-    const match = url.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
-    if (!match) {
-      win.alert("Paste a GitHub file URL in the format github.com/user/repo/blob/branch/file");
-      return;
-    }
-    const [, owner, repo, branch, path] = match;
-    els.githubLoad.disabled = true;
-    try {
-      const response = await fetch(
-        `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`,
-      );
-      if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
-      useImport({
-        id: "custom",
-        filename: path,
-        repo: `${owner}/${repo}`,
-        path: `/ ${path} · comments skipped`,
-        icon: "◆",
-        code: codeOnly(await response.text()),
+  function importGithub(url) {
+    return runImport(async () => {
+      const parsed = parseGitHubUrl(url);
+      const text = await fetchGitHubFile(parsed.rawUrl, { fetchImpl });
+      const { record, notices } = prepareImport(text, {
+        source: "github",
+        filename: parsed.path.split("/").pop() || parsed.path,
+        repo: `${parsed.owner}/${parsed.repo}`,
+        path: `/ ${parsed.path.split("/").join(" / ")}`,
+        url: String(url).trim(),
+        lineRange: parsed.lineRange,
       });
-    } catch (error) {
-      win.alert(`Could not load that GitHub file: ${error.message}`);
-    } finally {
-      els.githubLoad.disabled = false;
-    }
+      els.githubUrl.value = "";
+      store.set({ githubFormOpen: false });
+      useImport(record, notices);
+    });
+  }
+
+  /** Changes the practiced line range of the current import. */
+  function setRange(startValue, endValue) {
+    const { item } = store.get();
+    if (item.id !== "custom") return;
+    const total = fullDocumentFor(item).totalLines;
+    const { range, limited } = clampRange(
+      { start: Number(startValue), end: Number(endValue) },
+      total,
+    );
+    const whole = range.start === 1 && range.end === total;
+    const next = { ...item, range: whole ? null : range };
+    documentCache = { item: next, document: fullDocumentFor(item) };
+    writeJSON(STORAGE_KEYS.lastImport, next);
+    store.set({
+      item: next,
+      savedImport: next,
+      notices: limited
+        ? [
+            `At most ${PRACTICE_MAX_LINES} lines are practiced at once, so the range ends at line ${range.end}.`,
+          ]
+        : [],
+    });
+    refreshDocument();
+  }
+
+  /** Removes the imported code from this browser (U11, R6). */
+  function forgetImport() {
+    removeKey(STORAGE_KEYS.lastImport);
+    const wasCurrent = store.get().item.id === "custom";
+    store.set({ savedImport: null, notices: ["Imported code removed from this browser."] });
+    if (wasCurrent) selectItem(EXAMPLES[0]);
   }
 
   // --- Actions ---------------------------------------------------------------
@@ -381,7 +482,8 @@ export function createApp(
       dispatch(EVENT.RESET);
     },
     selectSource(id) {
-      const item = id === "custom" ? loadImport() : EXAMPLES.find((example) => example.id === id);
+      const item =
+        id === "custom" ? store.get().savedImport : EXAMPLES.find((example) => example.id === id);
       if (item) {
         selectItem(item);
       } else {
@@ -391,16 +493,26 @@ export function createApp(
     togglePunishment: () => setPunishment(!store.get().settings.punishment),
     toggleRandomStart: () => setRandomStart(!store.get().settings.randomStart),
     toggleAutoIndent: () => setAutoIndent(!store.get().settings.autoIndent),
+    toggleSkipComments: () => setSkipComments(!store.get().settings.skipComments),
     setCountdown,
     toggleTheme: () => setTheme(store.get().settings.theme === "dark" ? "light" : "dark"),
+    toggleGithubForm() {
+      const open = !store.get().githubFormOpen;
+      store.set({ githubFormOpen: open, importError: null });
+      if (open) els.githubUrl.focus();
+    },
     importLocalFile,
     importGithub,
+    setRange,
+    forgetImport,
+    dismissNotice: () => store.set({ notices: [] }),
   };
 
   const targetView = createTargetView(els);
   const renderers = [
     renderTheme,
     renderControls,
+    renderImport,
     (_, state, prev) => targetView.render(state, prev),
     renderStats,
     renderStatus,
