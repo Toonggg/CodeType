@@ -47,13 +47,8 @@
         <div class="control-group source-control">
           <span class="control-label">EXAMPLE OR FILE</span>
           <div class="select-wrap">
-            <select id="source-select" aria-label="Choose source">
-              <option value="python-stdlib">Python · asyncio runner</option>
-              <option value="python-requests">Python · Requests session</option>
-              <option value="cpp-stdlib">C++ · libc++ algorithm</option>
-              <option value="rust-stdlib">Rust · UTF-8 strings</option>
-              <option value="custom">My imported code</option>
-            </select>
+            <!-- Options are generated from src/data/examples.js at boot. -->
+            <select id="source-select" aria-label="Choose source"></select>
           </div>
         </div>
         <details class="options-menu">
@@ -192,6 +187,6 @@
       </section>
     </main>
 
-    <script src="app.js"></script>
+    <script type="module" src="/src/main.js"></script>
   </body>
 </html>

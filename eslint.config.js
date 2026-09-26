@@ -13,14 +13,11 @@ export default [
     },
     rules: {
       "no-shadow": "error",
-      "no-mixed-operators": "error",
+      // Only logical operators: Prettier removes parentheses around arithmetic.
+      "no-mixed-operators": ["error", { groups: [["&&", "||"]] }],
       "prefer-const": "error",
       eqeqeq: ["error", "always"],
     },
-  },
-  {
-    files: ["app.js"],
-    languageOptions: { sourceType: "script" },
   },
   {
     files: ["*.config.js", "tests/**/*.js"],
