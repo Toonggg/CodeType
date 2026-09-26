@@ -29,7 +29,7 @@ describe("countdown", () => {
 
     typeValue(els, "def");
     expect(els.input.value).toBe("");
-    expect(app.store.get().typed).toBe("");
+    expect(app.store.get().session.typed).toEqual([]);
 
     pressKey(document, "Escape");
     expect(status()).toBe(STATUS.IDLE);
