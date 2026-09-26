@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { STATUS } from "../src/state.js";
-import { mountApp, typeValue } from "./helpers/mount.js";
+import { mountApp, pressKey, typeValue } from "./helpers/mount.js";
 
 let app;
 let els;
@@ -117,5 +117,54 @@ describe("icons (U10, A11, H14)", () => {
       const name = button.getAttribute("aria-label") ?? button.textContent.trim();
       expect(name, button.id).not.toBe("");
     }
+  });
+});
+
+describe("keyboard (A10, U13)", () => {
+  test("Ctrl+Enter and Cmd+Enter restart into ready with focus", () => {
+    els.input.focus();
+    typeValue(els, target().slice(0, 3));
+    expect(app.store.get().status).toBe(STATUS.RUNNING);
+    const event = pressKey(els.input, "Enter", { ctrlKey: true });
+    expect(event.defaultPrevented).toBe(true);
+    expect(app.store.get().status).toBe(STATUS.READY);
+    expect(els.input.value).toBe("");
+    expect(document.activeElement).toBe(els.input);
+
+    typeValue(els, target().slice(0, 2));
+    pressKey(document.body, "Enter", { metaKey: true });
+    expect(els.input.value).toBe("");
+    expect(app.store.get().status).toBe(STATUS.READY);
+  });
+
+  test("the shortcut restarts after completion and closes the options menu", () => {
+    els.input.focus();
+    typeValue(els, target());
+    expect(app.store.get().status).toBe(STATUS.COMPLETE);
+    els.optionsMenu.open = true;
+    pressKey(document.body, "Enter", { ctrlKey: true });
+    expect(els.optionsMenu.open).toBe(false);
+    expect(app.store.get().status).toBe(STATUS.READY);
+  });
+
+  test("the shortcut is left alone in other form fields", () => {
+    els.input.focus();
+    typeValue(els, target().slice(0, 3));
+    els.githubUrl.hidden = false;
+    const event = pressKey(els.githubUrl, "Enter", { ctrlKey: true });
+    expect(event.defaultPrevented).toBe(false);
+    expect(app.store.get().session.typed.length).toBe(3);
+  });
+
+  test("plain Enter is typed, not treated as a shortcut", () => {
+    els.input.focus();
+    const event = pressKey(els.input, "Enter");
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  test("Shift+Tab is not intercepted, so focus can leave the typing area (A1)", () => {
+    els.input.focus();
+    expect(pressKey(els.input, "Tab", { shiftKey: true }).defaultPrevented).toBe(false);
+    expect(pressKey(els.input, "Tab").defaultPrevented).toBe(true);
   });
 });

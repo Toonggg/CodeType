@@ -326,6 +326,7 @@
           <p id="typing-help" class="visually-hidden">
             Type the code from the Code to type region exactly, including spaces and line breaks.
             Tab inserts the expected indentation. Escape pauses or resumes; Escape twice restarts.
+            Control+Enter or Command+Enter also restarts.
           </p>
           <textarea
             id="typing-input"
@@ -407,9 +408,20 @@
           </p>
           <p>
             Speed counts correct characters per minute. Accuracy counts every key you typed, so
-            fixing a mistake with Backspace does not erase it. Press <strong>Esc</strong> to pause
-            or resume, and <strong>Esc</strong> twice to restart.
+            fixing a mistake with Backspace does not erase it.
           </p>
+          <dl class="shortcuts" aria-label="Keyboard shortcuts">
+            <dt><kbd>Tab</kbd></dt>
+            <dd>Insert the indentation the code expects</dd>
+            <dt><kbd>Esc</kbd></dt>
+            <dd>Pause or resume; close the Options menu; leave the typing area when idle</dd>
+            <dt><kbd>Esc</kbd> <kbd>Esc</kbd></dt>
+            <dd>Restart the run (press twice quickly)</dd>
+            <dt><kbd>Ctrl</kbd> + <kbd>Enter</kbd></dt>
+            <dd>Restart the run (<kbd>Cmd</kbd> + <kbd>Enter</kbd> on a Mac)</dd>
+            <dt><kbd>Shift</kbd> + <kbd>Tab</kbd></dt>
+            <dd>Move focus out of the typing area</dd>
+          </dl>
           <p>
             Use <strong>Local file</strong> or paste a file URL with <strong>GitHub file</strong>.
             CodeType detects the file extension and applies the closest available syntax colors.

@@ -153,7 +153,15 @@ export function bindEvents(els, actions, { doc = document, win = window, signal 
   doc.addEventListener(
     "keydown",
     (event) => {
-      if (event.key === "Escape") actions.escape(event);
+      if (event.key === "Escape") {
+        actions.escape(event);
+      } else if (event.key === "Enter" && (event.ctrlKey || event.metaKey) && !event.isComposing) {
+        // Ctrl/Cmd+Enter restarts from anywhere except another form field (A10).
+        const field = event.target.closest?.("input, select, textarea");
+        if (field && field !== els.input) return;
+        event.preventDefault();
+        actions.restart();
+      }
     },
     options,
   );

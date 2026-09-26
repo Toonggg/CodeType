@@ -442,6 +442,7 @@ export function createApp(
       dispatch(EVENT.BLUR);
     },
     restart() {
+      els.optionsMenu.open = false;
       dispatch(EVENT.RESTART);
     },
     newStart() {

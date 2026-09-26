@@ -341,6 +341,15 @@
   margin: 0;
 }
 
+.shortcuts kbd {
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  color: var(--ink);
+  font: 12px var(--mono);
+}
+
 /* --- Focus mode (U9, C14) ---------------------------------------------------------
  * The surroundings blur while typing. The page keeps scrolling and the card keeps
  * its size, so the stats and Restart stay reachable on short screens. */
