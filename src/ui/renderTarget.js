@@ -69,6 +69,8 @@ export function createTargetView(els) {
     }
     els.display.replaceChildren(fragment);
     els.display.scrollTop = 0;
+    // The same text, unstyled, for screen readers (A2).
+    els.targetText.textContent = target.chars.join("");
     // Read once per target, never per keystroke (P2).
     lineHeight = parseFloat(getComputedStyle(els.display).lineHeight) || 0;
   }

@@ -232,19 +232,25 @@
           <span class="line-count" id="line-count"></span>
         </div>
 
-        <div
-          class="code-window"
-          id="code-window"
-          tabindex="0"
-          role="textbox"
-          aria-label="Code typing area"
-        >
+        <!-- The textarea is the only focusable element here; clicks anywhere focus it (A2). -->
+        <div class="code-window" id="code-window">
           <div class="code-header">
             <span class="dot dot--red"></span><span class="dot dot--yellow"></span
             ><span class="dot dot--green"></span>
-            <small id="typing-status" class="typing-status">CLICK TO START TYPING</small>
+            <small id="typing-status" class="typing-status" role="status"
+              >CLICK TO START TYPING</small
+            >
           </div>
+          <!-- One span per character is noisy for screen readers, so the display is
+               hidden from them and the plain text is exposed in the region below. -->
           <pre id="code-display" class="code-display" aria-hidden="true"></pre>
+          <div class="visually-hidden" role="region" aria-label="Code to type">
+            <pre id="target-text"></pre>
+          </div>
+          <p id="typing-help" class="visually-hidden">
+            Type the code from the Code to type region exactly, including spaces and line breaks.
+            Tab inserts the expected indentation. Escape pauses or resumes; Escape twice restarts.
+          </p>
           <textarea
             id="typing-input"
             class="typing-input"
@@ -253,6 +259,7 @@
             autocorrect="off"
             spellcheck="false"
             aria-label="Type the code"
+            aria-describedby="typing-help"
           ></textarea>
           <div class="click-hint">click anywhere to start typing</div>
         </div>
@@ -269,14 +276,25 @@
           <div class="stat time-stat">
             <span class="stat-label label-caps"
               >TIME
-              <span id="timer-indicator" class="timer-indicator" aria-label="Timer inactive"></span>
+              <!-- The timer state is announced by the status line (B25). -->
+              <span id="timer-indicator" class="timer-indicator" aria-hidden="true"></span>
             </span>
             <strong id="time" class="stat-value">00:00</strong>
           </div>
           <div class="stat progress-stat">
             <span class="stat-label label-caps">PROGRESS</span>
             <strong class="stat-value"><span id="progress">0</span><small>%</small></strong>
-            <div class="progress-track"><span id="progress-bar" class="progress-bar"></span></div>
+            <div
+              id="progress-track"
+              class="progress-track"
+              role="progressbar"
+              aria-label="Progress"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow="0"
+            >
+              <span id="progress-bar" class="progress-bar"></span>
+            </div>
           </div>
           <div class="stats-actions">
             <button id="new-start" class="btn btn--compact" type="button" hidden>

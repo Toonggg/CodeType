@@ -4,6 +4,7 @@
  */
 const SELECTORS = {
   display: "#code-display",
+  targetText: "#target-text",
   input: "#typing-input",
   window: "#code-window",
   sourceSelect: "#source-select",
@@ -46,6 +47,7 @@ const SELECTORS = {
   accuracy: "#accuracy",
   time: "#time",
   progress: "#progress",
+  progressTrack: "#progress-track",
   progressBar: "#progress-bar",
 };
 

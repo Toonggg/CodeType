@@ -13,6 +13,7 @@ export function renderStats(els, state, prev) {
     els.accuracy.textContent = computeAccuracy(session.entered, session.errors);
     els.progress.textContent = progress;
     els.progressBar.style.width = `${progress}%`;
+    els.progressTrack.setAttribute("aria-valuenow", String(progress));
   }
   const final = state.status === STATUS.COMPLETE;
   if (sessionChanged || elapsedMs !== prev.elapsedMs || state.status !== prev.status) {
