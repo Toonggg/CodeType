@@ -17,8 +17,8 @@ export const MAX_COUNTDOWN_S = 60;
 /** Standard typing-test definition of a "word". */
 export const CHARS_PER_WORD = 5;
 
-/** Leading spaces at or above which Tab inserts spaces instead of a tab (legacy behaviour). */
-export const TAB_SPACES = 4;
+/** WPM is shown as 0 until this much time has passed, to avoid absurd early spikes. */
+export const MIN_WPM_ELAPSED_MS = 1500;
 
 /** localStorage keys. Values stay compatible with earlier versions of the app. */
 export const STORAGE_KEYS = Object.freeze({
@@ -27,4 +27,5 @@ export const STORAGE_KEYS = Object.freeze({
   randomStart: "codetype-random-start",
   countdown: "codetype-countdown",
   lastImport: "codetype-last-import",
+  autoIndent: "codetype-auto-indent",
 });

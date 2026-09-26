@@ -2,6 +2,7 @@
  * Renders the card header and the code display.
  */
 import { syntaxClassAt } from "../syntax/tokenize.js";
+import { CHAR, charState } from "../typing.js";
 
 function escapeHtml(value) {
   return value.replace(
@@ -10,12 +11,14 @@ function escapeHtml(value) {
   );
 }
 
-function charStateClass(char, typedChar, i, typedLength) {
-  if (i >= typedLength) return i === typedLength ? "current" : "";
-  const whitespace = /\s/.test(char) || (typedChar && /\s/.test(typedChar));
-  if (whitespace) return "";
-  return typedChar === char ? "correct" : "incorrect";
-}
+/** Whitespace classes let CSS draw ↵ · → at the cursor and on mistakes (U1). */
+const WHITESPACE_CLASS = { " ": "ws-space", "\t": "ws-tab", "\n": "ws-nl" };
+
+const STATE_CLASS = {
+  [CHAR.PENDING]: "",
+  [CHAR.CORRECT]: "correct",
+  [CHAR.INCORRECT]: "incorrect",
+};
 
 function renderHeader(els, { item, target }) {
   const start = target.startLine ? ` · starts at line ${target.startLine + 1}` : "";
@@ -28,22 +31,26 @@ function renderHeader(els, { item, target }) {
 export function renderTarget(els, state, prev) {
   const targetChanged = !prev || state.targetVersion !== prev.targetVersion;
   if (targetChanged) renderHeader(els, state);
-  if (!targetChanged && state.typed === prev.typed) return;
+  if (!targetChanged && state.session === prev.session) return;
 
-  const { typed, target } = state;
-  els.display.innerHTML = [...target.text]
+  const { session, target } = state;
+  const cursor = session.typed.length;
+  els.display.innerHTML = target.chars
     .map((char, i) => {
-      const stateClass = charStateClass(char, typed[i], i, typed.length);
-      const text = char === "\n" ? "\n" : escapeHtml(char);
-      return `<span class="char ${stateClass} ${syntaxClassAt(target.ranges, i)}">${text}</span>`;
+      const stateClass =
+        i === cursor ? "current" : STATE_CLASS[charState(target.chars, session.typed, i)];
+      const classes = ["char", stateClass, WHITESPACE_CLASS[char], syntaxClassAt(target.ranges, i)]
+        .filter(Boolean)
+        .join(" ");
+      return `<span class="${classes}">${escapeHtml(char)}</span>`;
     })
     .join("");
   const current = els.display.querySelector(".current");
   if (current) {
     const lineHeight = parseFloat(getComputedStyle(els.display).lineHeight);
-    const currentLine = target.text.slice(0, typed.length).split("\n").length - 1;
+    const currentLine = target.chars.slice(0, cursor).filter((c) => c === "\n").length;
     const offset = currentLine * lineHeight - els.display.clientHeight / 2;
     els.display.scrollTop = Math.max(0, offset + lineHeight);
   }
-  els.clickHint.style.opacity = typed ? "0" : "1";
+  els.clickHint.style.opacity = cursor ? "0" : "1";
 }

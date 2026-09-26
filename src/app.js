@@ -2,13 +2,7 @@
  * The controller. It owns the store, the timers and every side effect of a status
  * change, and exposes the actions that DOM events are mapped to.
  */
-import {
-  DOUBLE_ESCAPE_MS,
-  SHAKE_MS,
-  STATS_TICK_MS,
-  STORAGE_KEYS,
-  TAB_SPACES,
-} from "./constants.js";
+import { DOUBLE_ESCAPE_MS, SHAKE_MS, STATS_TICK_MS, STORAGE_KEYS } from "./constants.js";
 import { EXAMPLES } from "./data/examples.js";
 import { codeOnly } from "./import/comments.js";
 import { buildTarget } from "./practice.js";
@@ -16,6 +10,7 @@ import { clampCountdown, loadSettings, saveSetting } from "./settings.js";
 import { EVENT, STATUS, acceptsInput, createStore, effectsFor, transition } from "./state.js";
 import { readJSON, removeKey, writeJSON } from "./storage.js";
 import { createStopwatch } from "./timer.js";
+import { applyTyped, autoIndent, createSession, isComplete, smartTab, toChars } from "./typing.js";
 import { bindEvents } from "./ui/events.js";
 import { populateSourceOptions, renderControls } from "./ui/renderControls.js";
 import { renderStats } from "./ui/renderStats.js";
@@ -28,14 +23,6 @@ function loadImport() {
   if (saved && typeof saved.code === "string") return saved;
   if (saved) removeKey(STORAGE_KEYS.lastImport);
   return null;
-}
-
-/** Whitespace mismatches are not shown as errors (legacy rule, replaced in Phase 3). */
-function hasTypingError(target, typed) {
-  return [...typed].some((char, index) => {
-    const expected = target[index];
-    return expected && !(/\s/.test(char) || /\s/.test(expected)) && char !== expected;
-  });
 }
 
 export function createApp(
@@ -51,14 +38,17 @@ export function createApp(
   const settings = loadSettings();
   const savedImport = loadImport();
   const firstItem = savedImport ?? EXAMPLES[0];
+  const firstTarget = buildTarget(firstItem, settings, random);
   const store = createStore({
     status: STATUS.IDLE,
     focused: false,
     countdownRemaining: 0,
     item: firstItem,
-    target: buildTarget(firstItem, settings, random),
+    target: firstTarget,
     targetVersion: 1,
-    typed: "",
+    session: createSession(firstTarget.chars),
+    /** Inclusive index range changed by the last edit (for incremental rendering). */
+    edit: null,
     elapsedMs: 0,
     settings,
     hasImport: Boolean(savedImport),
@@ -115,7 +105,7 @@ export function createApp(
     stopwatch.reset();
     stopShake();
     if (els.input.value !== "") els.input.value = "";
-    store.set({ typed: "", elapsedMs: 0 });
+    store.set({ session: createSession(store.get().target.chars), edit: null, elapsedMs: 0 });
   }
 
   /** Applies the side effects of a status. The only place that changes them. */
@@ -152,7 +142,8 @@ export function createApp(
 
   function rebuildTarget() {
     const { item, settings: current, targetVersion } = store.get();
-    store.set({ target: buildTarget(item, current, random), targetVersion: targetVersion + 1 });
+    const target = buildTarget(item, current, random);
+    store.set({ target, targetVersion: targetVersion + 1, session: createSession(target.chars) });
     dispatch(EVENT.RESET);
   }
 
@@ -164,10 +155,11 @@ export function createApp(
 
   // --- Typing ----------------------------------------------------------------
 
+  /** Shakes after each keystroke while the buffer contains a mistake (P4). */
   function updatePunishment() {
     win.clearTimeout(shakeId);
-    const { settings: current, typed, target } = store.get();
-    if (!current.punishment || !hasTypingError(target.text, typed)) {
+    const { settings: current, session } = store.get();
+    if (!current.punishment || session.incorrect === 0) {
       stopShake();
       return;
     }
@@ -179,30 +171,44 @@ export function createApp(
     const state = store.get();
     if (!acceptsInput(state.status)) {
       // Typing is ignored outside ready/running/paused (B3).
-      els.input.value = state.typed;
+      els.input.value = state.session.typed.join("");
       return;
     }
-    let value = rawValue;
-    if (value.length > state.target.text.length) {
-      value = value.slice(0, state.target.text.length);
-      els.input.value = value;
+    const previous = state.session;
+    const applied = applyTyped(previous, toChars(rawValue));
+    let { session, to } = applied;
+
+    // Auto-indent (U7): a single newline was just typed at the end.
+    const { from } = applied;
+    const insertedNewline =
+      from === previous.typed.length &&
+      session.typed.length === from + 1 &&
+      session.typed[from] === "\n";
+    if (insertedNewline && state.settings.autoIndent) {
+      const indent = autoIndent(session.target, from);
+      if (indent.length) {
+        const auto = applyTyped(session, [...session.typed, ...indent], {
+          autoFrom: session.typed.length,
+        });
+        session = auto.session;
+        to = Math.max(to, auto.to);
+      }
     }
+
+    const text = session.typed.join("");
+    if (els.input.value !== text) els.input.value = text;
     dispatch(EVENT.TYPE);
-    store.set({ typed: value, elapsedMs: stopwatch.elapsedMs() });
+    store.set({ session, edit: { from, to }, elapsedMs: stopwatch.elapsedMs() });
     updatePunishment();
-    if (value === state.target.text) dispatch(EVENT.FINISH);
+    if (isComplete(session)) dispatch(EVENT.FINISH);
   }
 
+  /** Tab inserts exactly the whitespace the target expects at the caret (B1). */
   function insertIndent() {
-    const state = store.get();
-    if (!acceptsInput(state.status)) return;
-    const { selectionStart, selectionEnd, value } = els.input;
-    const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
-    const targetIndent = state.target.text.slice(lineStart).match(/^ +/);
-    const indentation =
-      targetIndent && targetIndent[0].length >= TAB_SPACES ? " ".repeat(TAB_SPACES) : "\t";
-    els.input.setRangeText(indentation, selectionStart, selectionEnd, "end");
-    handleInput(els.input.value);
+    const { status, session } = store.get();
+    if (!acceptsInput(status)) return;
+    const run = smartTab(session.target, session.typed.length);
+    if (run.length) handleInput(els.input.value + run.join(""));
   }
 
   // --- Settings (Q6: one setter per setting, state is the source of truth) ----
@@ -221,6 +227,11 @@ export function createApp(
     updateSettings({ randomStart: enabled });
     saveSetting("randomStart", enabled);
     rebuildTarget();
+  }
+
+  function setAutoIndent(enabled) {
+    updateSettings({ autoIndent: enabled });
+    saveSetting("autoIndent", enabled);
   }
 
   function setCountdown(value) {
@@ -352,6 +363,7 @@ export function createApp(
     },
     togglePunishment: () => setPunishment(!store.get().settings.punishment),
     toggleRandomStart: () => setRandomStart(!store.get().settings.randomStart),
+    toggleAutoIndent: () => setAutoIndent(!store.get().settings.autoIndent),
     setCountdown,
     toggleTheme: () => setTheme(store.get().settings.theme === "dark" ? "light" : "dark"),
     importLocalFile,
@@ -359,7 +371,6 @@ export function createApp(
   };
 
   const renderers = [renderTheme, renderControls, renderTarget, renderStats, renderStatus];
-
   const lifetime = new AbortController();
 
   function init() {

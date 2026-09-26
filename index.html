@@ -60,6 +60,17 @@
               <button id="github-button" class="import-button" type="button">⌘ GitHub file</button>
             </div>
             <div class="option-row">
+              <span class="option-label">TYPING</span>
+              <button
+                id="auto-indent-toggle"
+                class="import-button"
+                type="button"
+                aria-pressed="true"
+              >
+                ⇥ Auto-indent on
+              </button>
+            </div>
+            <div class="option-row">
               <span class="option-label">CHALLENGE</span>
               <button
                 id="punishment-toggle"
@@ -172,9 +183,19 @@
         </div>
         <div class="explanation-copy">
           <p>
-            Choose an example or load any code file, then type the highlighted code exactly as
-            shown. Spaces, tabs, and line breaks are part of the challenge, while your speed and
-            accuracy update as you type.
+            Choose an example or load any code file, then type the code exactly as shown. Spaces,
+            tabs and line breaks count: a wrong space turns red, and the challenge completes only
+            when every character matches.
+          </p>
+          <p>
+            <strong>Tab</strong> fills in the indentation the code expects at the cursor. With
+            <strong>Auto-indent</strong> on, pressing Enter also adds the next line's indentation;
+            turn it off in Options for a harder run.
+          </p>
+          <p>
+            Speed counts correct characters per minute. Accuracy counts every key you typed, so
+            fixing a mistake with Backspace does not erase it. Press <strong>Esc</strong> to pause
+            or resume, and <strong>Esc</strong> twice to restart.
           </p>
           <p>
             Use <strong>Local file</strong> or paste a file URL with <strong>GitHub file</strong>.

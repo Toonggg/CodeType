@@ -2,16 +2,75 @@
  * All DOM event listeners, in one place. Handlers stay thin: they translate DOM
  * events into controller actions.
  */
+
+/** Keys that would move the caret away from the end of the typed text (B16). */
+const NAVIGATION_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Home",
+  "End",
+  "PageUp",
+  "PageDown",
+]);
+
+/** Input types that would insert text the user did not type (B17). */
+const BLOCKED_INPUT_TYPES = new Set([
+  "insertFromPaste",
+  "insertFromPasteAsQuotation",
+  "insertFromDrop",
+  "insertFromYank",
+  "insertReplacementText",
+  "insertTranspose",
+  "insertLink",
+  "deleteByDrag",
+  "historyUndo",
+  "historyRedo",
+]);
+
+function handleTypingKeydown(event, actions) {
+  if (event.isComposing) return;
+  const shortcut = event.ctrlKey || event.metaKey;
+  if (event.key === "Tab" && !event.shiftKey && !event.altKey && !shortcut) {
+    // Shift+Tab is left alone so keyboard users can always leave (A1).
+    event.preventDefault();
+    actions.tab();
+  } else if (NAVIGATION_KEYS.has(event.key)) {
+    event.preventDefault();
+  } else if (shortcut && ["a", "z", "y"].includes(event.key.toLowerCase())) {
+    // Select-all, undo and redo would edit text away from the caret.
+    event.preventDefault();
+  }
+}
+
 export function bindEvents(els, actions, { doc = document, win = window, signal } = {}) {
   const options = { signal };
   // Typing area.
   els.input.addEventListener("input", () => actions.input(els.input.value), options);
+  els.input.addEventListener("keydown", (event) => handleTypingKeydown(event, actions), options);
   els.input.addEventListener(
-    "keydown",
+    "beforeinput",
     (event) => {
-      if (event.key !== "Tab") return;
-      event.preventDefault();
-      actions.tab();
+      if (BLOCKED_INPUT_TYPES.has(event.inputType)) event.preventDefault();
+    },
+    options,
+  );
+  for (const type of ["paste", "drop"]) {
+    els.input.addEventListener(type, (event) => event.preventDefault(), options);
+  }
+  // Keep the caret pinned to the end of the typed text (B16).
+  const pinCaret = () => {
+    const end = els.input.value.length;
+    if (els.input.selectionStart !== end || els.input.selectionEnd !== end) {
+      els.input.setSelectionRange(end, end);
+    }
+  };
+  els.input.addEventListener("select", pinCaret, options);
+  doc.addEventListener(
+    "selectionchange",
+    () => {
+      if (doc.activeElement === els.input) pinCaret();
     },
     options,
   );
@@ -35,6 +94,7 @@ export function bindEvents(els, actions, { doc = document, win = window, signal 
   // Settings.
   els.punishmentToggle.addEventListener("click", actions.togglePunishment, options);
   els.randomStartToggle.addEventListener("click", actions.toggleRandomStart, options);
+  els.autoIndentToggle.addEventListener("click", actions.toggleAutoIndent, options);
   els.countdownSeconds.addEventListener(
     "change",
     () => actions.setCountdown(els.countdownSeconds.value),

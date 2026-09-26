@@ -15,6 +15,7 @@ const SELECTORS = {
   githubLoad: "#github-load",
   punishmentToggle: "#punishment-toggle",
   randomStartToggle: "#random-start-toggle",
+  autoIndentToggle: "#auto-indent-toggle",
   countdownSeconds: "#countdown-seconds",
   startCountdown: "#start-countdown",
   themeToggle: "#theme-toggle",

@@ -390,7 +390,8 @@ select {
   min-width: 142px;
 }
 #punishment-toggle,
-#random-start-toggle {
+#random-start-toggle,
+#auto-indent-toggle {
   min-width: 164px;
 }
 .start-countdown {
@@ -424,7 +425,8 @@ body.dark .options-panel {
 body.dark #punishment-toggle[aria-pressed="true"],
 #punishment-toggle[aria-pressed="true"],
 body.dark #random-start-toggle[aria-pressed="true"],
-#random-start-toggle[aria-pressed="true"] {
+#random-start-toggle[aria-pressed="true"],
+#auto-indent-toggle[aria-pressed="true"] {
   background: #fff0d6;
   border-color: #c77d00;
   color: #8a4b00;
@@ -434,7 +436,8 @@ body.dark #punishment-toggle[aria-pressed="true"] {
   border-color: #d29922;
   color: #ffd580;
 }
-body.dark #random-start-toggle[aria-pressed="true"] {
+body.dark #random-start-toggle[aria-pressed="true"],
+body.dark #auto-indent-toggle[aria-pressed="true"] {
   background: #1f3a5f;
   border-color: #58a6ff;
   color: #c6e3ff;
@@ -689,6 +692,39 @@ body.dark pre {
   background: #5a2020;
   border-radius: 2px;
   font-weight: 500;
+}
+/* Whitespace markers (U1): the cursor and mistakes on whitespace stay visible. */
+.char.ws-space,
+.char.ws-tab {
+  position: relative;
+}
+.char.ws-space.correct,
+.char.ws-tab.correct {
+  background: transparent;
+}
+.char.ws-space.current::after,
+.char.ws-space.incorrect::after,
+.char.ws-tab.current::after,
+.char.ws-tab.incorrect::after {
+  position: absolute;
+  inset: 0;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.char.ws-space.current::after,
+.char.ws-space.incorrect::after {
+  content: "·";
+  text-align: center;
+}
+.char.ws-tab.current::after,
+.char.ws-tab.incorrect::after {
+  content: "→";
+  padding-left: 2px;
+}
+.char.ws-nl.current::before,
+.char.ws-nl.incorrect::before {
+  content: "↵";
+  opacity: 0.75;
 }
 #typing-input {
   position: absolute;

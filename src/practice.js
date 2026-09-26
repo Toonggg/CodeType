@@ -3,6 +3,7 @@
  */
 import { detectLanguage } from "./syntax/languages.js";
 import { buildSyntaxRanges } from "./syntax/tokenize.js";
+import { toChars } from "./typing.js";
 
 export function chooseRandomStart(lines, random = Math.random) {
   const candidates = lines
@@ -19,6 +20,7 @@ export function buildTarget(item, settings, random = Math.random) {
   const language = item.language || detectLanguage(item.filename || item.path || item.repo);
   return {
     text,
+    chars: toChars(text),
     startLine,
     language,
     ranges: buildSyntaxRanges(text, language),

@@ -22,6 +22,9 @@ export function renderControls(els, state, prev) {
   if (!before || settings.randomStart !== before.randomStart) {
     setToggle(els.randomStartToggle, settings.randomStart, "↝ Random start");
   }
+  if (!before || settings.autoIndent !== before.autoIndent) {
+    setToggle(els.autoIndentToggle, settings.autoIndent, "⇥ Auto-indent");
+  }
   if (!before || settings.countdownSeconds !== before.countdownSeconds) {
     els.countdownSeconds.value = String(settings.countdownSeconds);
   }
