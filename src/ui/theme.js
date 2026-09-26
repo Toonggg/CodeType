@@ -15,8 +15,23 @@ export function isDark(theme, win = window) {
   return theme === "dark" || (theme === null && systemPrefersDark(win));
 }
 
+/**
+ * Switches the theme class with every CSS transition disabled (.theme-switching in
+ * base.css), so all colours change in the same frame instead of some fading and
+ * others jumping.
+ */
+function setDarkClass(root, dark) {
+  if (root.classList.contains("dark") === dark) return;
+  root.classList.add("theme-switching");
+  root.classList.toggle("dark", dark);
+  // Compute the new styles now, while transitions are off. Afterwards only the
+  // transition property changes back, which starts no transition.
+  void root.offsetHeight;
+  root.classList.remove("theme-switching");
+}
+
 export function applyTheme(els, dark, doc = document) {
-  doc.documentElement.classList.toggle("dark", dark);
+  setDarkClass(doc.documentElement, dark);
   els.themeToggle.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
   doc
     .querySelector('meta[name="theme-color"]')

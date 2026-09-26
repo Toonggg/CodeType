@@ -31,7 +31,9 @@ describe("Content-Security-Policy (R5, H15)", () => {
   });
 
   test("changing the inline script changes the hash", () => {
-    const edited = html.replace("var dark = false;", "var dark = true;");
+    const body = html.match(/<script>([\s\S]*?)<\/script>/)[1];
+    const edited = html.replace(body, `${body};`);
+    expect(edited).not.toBe(html);
     expect(policyOf(transform(edited))).not.toBe(policyOf(transform(html)));
   });
 

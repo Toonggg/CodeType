@@ -352,22 +352,32 @@
 
 /* --- Focus mode (U9, C14) ---------------------------------------------------------
  * The surroundings blur while typing. The page keeps scrolling and the card keeps
- * its size, so the stats and Restart stay reachable on short screens. */
+ * its size, so the stats and Restart stay reachable on short screens.
+ *
+ * The transitions sit on the elements themselves, not on the .challenge-active rules,
+ * so leaving focus mode (pausing, finishing, clicking away) fades back as smoothly as
+ * entering it instead of snapping the whole page sharp in one frame. */
+
+:is(.topbar, .hero, .controls, .notice, .explanation) {
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+}
+
+.practice-card {
+  transition: box-shadow 0.2s;
+}
 
 body.challenge-active :is(.topbar, .hero, .controls, .notice, .explanation) {
   filter: blur(6px);
   opacity: 0.42;
   pointer-events: none;
-  transition:
-    filter 0.2s,
-    opacity 0.2s;
 }
 
 body.challenge-active .practice-card {
   position: relative;
   z-index: 2;
   box-shadow: var(--shadow-card);
-  transition: box-shadow 0.2s;
 }
 
 /* --- Responsive (C15) ---------------------------------------------------------------- */

@@ -9,14 +9,26 @@
   display: none !important;
 }
 
+/* No colour transition here: a theme change must repaint everything in one frame (see
+   .theme-switching below). */
 body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--sans);
-  transition:
-    background 0.2s,
-    color 0.2s;
+}
+
+/*
+ * Set by theme.js for the moment the theme class changes. Fading colours pass through
+ * similar greys, and a mix of fading and instant colours puts text and its background
+ * in different themes for a few frames: both made text nearly invisible (about 1:1)
+ * mid-switch. With every transition off, the whole page changes in a single frame.
+ */
+:root.theme-switching,
+:root.theme-switching *,
+:root.theme-switching *::before,
+:root.theme-switching *::after {
+  transition: none !important;
 }
 
 /* One focus style for every interactive element (C12, C21). */

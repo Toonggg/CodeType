@@ -12,16 +12,20 @@
     <title>CodeType — Practice with real code</title>
     <script>
       // Apply the saved theme, or the system preference, before the first paint (B19).
+      // Same rule as isDark() in src/ui/theme.js, so the app never flips it after loading:
+      // only "dark" or "light" counts as a saved choice; anything else, or blocked
+      // storage, follows the system.
       (function () {
-        var dark = false;
+        var saved = null;
         try {
-          var saved = localStorage.getItem("codetype-theme");
-          dark = saved
-            ? saved === "dark"
-            : window.matchMedia("(prefers-color-scheme: dark)").matches;
+          saved = localStorage.getItem("codetype-theme");
         } catch (error) {
-          dark = false;
+          saved = null;
         }
+        var systemDark = Boolean(
+          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches,
+        );
+        var dark = saved === "dark" || (saved !== "light" && systemDark);
         if (dark) {
           document.documentElement.classList.add("dark");
           document.querySelector('meta[name="theme-color"]').content = "#0d1117";
