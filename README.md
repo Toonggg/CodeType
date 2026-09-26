@@ -14,8 +14,8 @@ npm install
 npm run dev
 ```
 
-Open the printed local URL in a browser. ES modules need HTTP, so opening `index.html` from disk
-does not work (decision D1).
+The app opens in your default browser (the URL is also printed in the terminal). ES modules need
+HTTP, so opening `index.html` from disk does not work (decision D1).
 
 ## Test, lint and format
 
