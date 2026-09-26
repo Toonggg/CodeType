@@ -4,6 +4,9 @@
   "private": true,
   "description": "Typing practice for developers using real code.",
   "type": "module",
+  "engines": {
+    "node": "^22.13.0 || ^24.0.0 || >=26.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
