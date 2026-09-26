@@ -104,7 +104,7 @@ describe("running and pausing", () => {
 
 describe("completion", () => {
   test("freezes stats, stops the indicator and makes the input read-only (B5)", () => {
-    const target = app.store.get().target.text;
+    const target = app.store.get().target.chars.join("");
     els.input.focus();
     typeValue(els, target.slice(0, 1));
     vi.advanceTimersByTime(3000);
@@ -123,7 +123,7 @@ describe("completion", () => {
   });
 
   test("Restart returns to ready with focus (B26)", () => {
-    const target = app.store.get().target.text;
+    const target = app.store.get().target.chars.join("");
     els.input.focus();
     typeValue(els, target);
     els.restart.click();
