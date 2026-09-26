@@ -56,8 +56,8 @@
           <div class="options-panel">
             <div class="option-row">
               <span class="option-label">IMPORT CODE</span>
-              <button id="import-button" class="import-button">＋ Local file</button>
-              <button id="github-button" class="import-button">⌘ GitHub file</button>
+              <button id="import-button" class="import-button" type="button">＋ Local file</button>
+              <button id="github-button" class="import-button" type="button">⌘ GitHub file</button>
             </div>
             <div class="option-row">
               <span class="option-label">CHALLENGE</span>
@@ -96,7 +96,7 @@
             </div>
           </div>
         </details>
-        <input id="file-input" type="file" accept="*/*" hidden />
+        <input id="file-input" type="file" hidden />
         <div id="github-import" class="github-import" hidden>
           <input
             id="github-url"
@@ -104,7 +104,7 @@
             placeholder="https://github.com/user/repo/blob/main/file.py"
             aria-label="GitHub file URL"
           />
-          <button id="github-load" class="import-button">Load</button>
+          <button id="github-load" class="import-button" type="button">Load</button>
         </div>
       </section>
 
@@ -112,12 +112,9 @@
         <div class="card-topline">
           <div class="repo-info">
             <span id="repo-icon" class="repo-icon">⌘</span>
-            <div>
-              <strong id="repo-name">cpython</strong
-              ><span id="repo-path">/ Lib / functools.py</span>
-            </div>
+            <div><strong id="repo-name"></strong><span id="repo-path"></span></div>
           </div>
-          <span class="line-count" id="line-count">08 lines</span>
+          <span class="line-count" id="line-count"></span>
         </div>
 
         <div

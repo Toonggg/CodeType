@@ -87,6 +87,7 @@ body.punishment-shaking {
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 clamp(24px, 6vw, 92px);
   gap: 58px;
   background: rgba(244, 245, 240, 0.88);
@@ -106,22 +107,6 @@ body.dark .topbar {
   font-family: var(--mono);
   font-size: 16px;
   margin-right: 7px;
-}
-nav {
-  display: flex;
-  gap: 32px;
-  flex: 1;
-  height: 100%;
-  align-items: center;
-}
-nav a {
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 13px;
-}
-nav a.active {
-  color: var(--ink);
-  font-weight: 600;
 }
 .topbar-actions {
   display: flex;
@@ -347,6 +332,7 @@ select,
   font: 12px "Space Grotesk";
   padding: 0 16px;
   white-space: nowrap;
+  cursor: pointer;
 }
 .language.active {
   background: var(--ink);
