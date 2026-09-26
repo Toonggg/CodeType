@@ -28,7 +28,11 @@
         }
       })();
     </script>
+    <!-- SVG where supported; the ICO (sizes set so Chrome still prefers the SVG) and the
+         touch icon cover older browsers and iOS home screens (H16). -->
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link
       rel="preload"
       href="/fonts/space-grotesk-latin-wght-normal.woff2"
