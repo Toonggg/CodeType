@@ -1,0 +1,17 @@
+/*
+ * CodeType styles. Order matters: tokens first, then base, then components.
+ *   fonts.css   self-hosted @font-face rules
+ *   tokens.css  every colour, font and spacing variable; the dark theme
+ *   base.css    reset, focus ring, buttons, form fields
+ *   layout.css  topbar, hero, controls, options panel, explanation, responsive
+ *   code.css    practice card, code window, typed characters, syntax colours
+ *   stats.css   stats row, timer indicator, progress
+ *   motion.css  animations and prefers-reduced-motion
+ */
+@import "./fonts.css";
+@import "./tokens.css";
+@import "./base.css";
+@import "./layout.css";
+@import "./code.css";
+@import "./stats.css";
+@import "./motion.css";

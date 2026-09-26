@@ -1,0 +1,266 @@
+/* The practice card: header, code window, typed characters and syntax colours. */
+
+.practice-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--card);
+}
+
+.card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 63px;
+  padding: 0 27px;
+  border-bottom: 1px solid var(--line);
+}
+
+.repo-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.repo-info strong {
+  font-weight: 500;
+}
+
+.repo-path {
+  color: var(--muted);
+}
+
+/* Language badge (replaces the old Unicode glyph icons, U10). */
+.repo-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--badge-bg);
+  color: var(--badge-fg);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.line-count {
+  flex: none;
+  color: var(--muted);
+  font: 11px var(--mono);
+}
+
+/* --- Code window ------------------------------------------------------------------ */
+
+.code-window {
+  position: relative;
+  padding: 52px var(--code-pad-x) 38px;
+  outline: 2px solid transparent;
+  outline-offset: -2px;
+  background: var(--code-bg);
+  cursor: text;
+  transition:
+    outline-color 0.15s,
+    background 0.15s;
+}
+
+.code-window:focus-within {
+  outline-color: var(--code-ring);
+  background: var(--code-bg-focus);
+}
+
+.code-window.complete {
+  outline-color: var(--success);
+}
+
+.code-header {
+  position: absolute;
+  top: 17px;
+  right: 24px;
+  left: 23px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--dot-edge);
+}
+
+.dot--red {
+  background: var(--dot-red);
+}
+
+.dot--yellow {
+  background: var(--dot-yellow);
+}
+
+.dot--green {
+  background: var(--dot-green);
+}
+
+.typing-status {
+  margin-left: auto;
+  color: var(--code-meta);
+  font: 11px var(--mono);
+  letter-spacing: 0.06em;
+  text-align: right;
+}
+
+/* A stable height: the window no longer grows when a challenge starts (U9). */
+.code-display {
+  position: relative;
+  height: clamp(180px, 50dvh, 390px);
+  margin: 0;
+  padding-right: 10px;
+  overflow-y: scroll;
+  color: var(--code-text);
+  font: 14px/1.8 var(--mono);
+  white-space: pre-wrap;
+  tab-size: 4;
+  user-select: none;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-gutter: stable;
+}
+
+/* One block per line keeps re-layout local to the edited line (P1). */
+.line {
+  display: block;
+}
+
+.char {
+  border-radius: 2px;
+  color: var(--char-pending);
+}
+
+.syntax-keyword {
+  color: var(--syn-keyword);
+}
+.syntax-string {
+  color: var(--syn-string);
+}
+.syntax-comment {
+  color: var(--syn-comment);
+  font-style: italic;
+}
+.syntax-number {
+  color: var(--syn-number);
+}
+.syntax-literal {
+  color: var(--syn-literal);
+}
+.syntax-function {
+  color: var(--syn-function);
+}
+.syntax-type {
+  color: var(--syn-type);
+}
+.syntax-decorator {
+  color: var(--syn-decorator);
+}
+.syntax-preprocessor {
+  color: var(--syn-preprocessor);
+}
+.syntax-macro {
+  color: var(--syn-macro);
+}
+.syntax-variable {
+  color: var(--syn-variable);
+}
+
+/* Typed characters change colour only, never weight, so text never shifts (C11). */
+.char.correct {
+  background: var(--correct-bg);
+  color: var(--correct-fg);
+}
+
+.char.incorrect {
+  background: var(--incorrect-bg);
+  color: var(--incorrect-fg);
+}
+
+.char.current {
+  background: var(--cursor-bg);
+  box-shadow: 0 0 0 2px var(--cursor-shadow);
+  color: var(--cursor-text);
+}
+
+/* Whitespace markers (U1): the cursor and mistakes on whitespace stay visible. */
+.char.ws-space,
+.char.ws-tab {
+  position: relative;
+}
+
+.char.ws-space.correct,
+.char.ws-tab.correct {
+  background: transparent;
+}
+
+.char.ws-space:is(.current, .incorrect)::after,
+.char.ws-tab:is(.current, .incorrect)::after {
+  position: absolute;
+  inset: 0;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.char.ws-space:is(.current, .incorrect)::after {
+  content: "·";
+  text-align: center;
+}
+
+.char.ws-tab:is(.current, .incorrect)::after {
+  content: "→";
+  padding-left: 2px;
+}
+
+.char.ws-nl:is(.current, .incorrect)::before {
+  content: "↵";
+  opacity: 0.75;
+}
+
+/* The real input: invisible, behind the display. 16px avoids iOS zoom (A9, C17). */
+.typing-input {
+  position: absolute;
+  inset: 0;
+  resize: none;
+  opacity: 0;
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.typing-input:focus {
+  outline: none;
+}
+
+.click-hint {
+  position: absolute;
+  bottom: 19px;
+  left: var(--code-pad-x);
+  color: var(--code-meta);
+  font: 11px var(--mono);
+  transition: opacity 0.15s;
+}
+
+.code-window.complete .click-hint {
+  opacity: 0;
+}
+
+@media (max-width: 700px) {
+  .practice-card {
+    --code-pad-x: 22px;
+  }
+
+  .card-topline {
+    padding: 12px 20px;
+  }
+}

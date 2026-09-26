@@ -1,0 +1,158 @@
+/*
+ * Design tokens (C1). Components use only these variables. The dark theme
+ * overrides token values, never component rules. Colour pairs are checked for
+ * WCAG AA contrast: 4.5:1 for text, 3:1 for large text and focus indicators.
+ */
+:root {
+  color-scheme: light;
+
+  /* Typography (C5) */
+  --sans: "Space Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Surfaces and text */
+  --ink: #202320;
+  --muted: #646a61;
+  --paper: #f4f5f0;
+  --card: #fbfcf8;
+  --line: #dfe3db;
+  --topbar-bg: color-mix(in srgb, var(--paper) 88%, transparent);
+
+  /* Brand: --brand is decorative; --brand-text meets 3:1 for large text */
+  --brand: #ef705c;
+  --brand-text: #dc6755;
+
+  /* Accent (C6: formerly --green, which was orange in dark mode) */
+  --accent: #b9f24f;
+  --accent-strong: #47631b;
+  --focus: #1f6feb;
+  --danger: #a52217;
+  --success: #1a7f37;
+
+  /* Controls */
+  --control-bg: #ffffff;
+  --control-border: #6f7d6b;
+  --control-text: #283127;
+  --control-hover-bg: #eef4e8;
+  --control-hover-border: #202320;
+  --control-hover-text: #202320;
+  --toggle-on-bg: #fff0d6;
+  --toggle-on-border: #c77d00;
+  --toggle-on-text: #8a4b00;
+  --toggle-warn-bg: #fff0d6;
+  --toggle-warn-border: #c77d00;
+  --toggle-warn-text: #8a4b00;
+  --panel-border: var(--line);
+  --shadow-panel: 0 14px 35px rgba(32, 35, 32, 0.16);
+  --shadow-card: 0 18px 70px rgba(32, 35, 32, 0.22);
+
+  /* Code area */
+  --code-bg: #eef0eb;
+  --code-bg-focus: #f0f4eb;
+  --code-text: #5f6a5e;
+  --code-meta: #5f6a5e;
+  --code-ring: var(--accent-strong);
+  --code-pad-x: 68px;
+  --char-pending: #5b665a;
+  --cursor-bg: var(--accent);
+  --cursor-text: #0d1117;
+  --cursor-shadow: rgba(71, 99, 27, 0.25);
+  --correct-fg: #176b2c;
+  --correct-bg: #c9f0d1;
+  --incorrect-fg: #a52217;
+  --incorrect-bg: #ffd7d2;
+  --scrollbar-thumb: #7d8978;
+  --scrollbar-track: #dfe4dc;
+  --badge-bg: #e9efe3;
+  --badge-fg: #55703f;
+  --dot-red: #e35d4f;
+  --dot-yellow: #d9a525;
+  --dot-green: #4eae62;
+  --dot-edge: rgba(32, 35, 32, 0.12);
+
+  /* Syntax */
+  --syn-keyword: #7c3aed;
+  --syn-string: #a23e2a;
+  --syn-comment: #5c6c59;
+  --syn-number: #9a5b00;
+  --syn-literal: #a62472;
+  --syn-function: #176b2c;
+  --syn-type: #006d9c;
+  --syn-decorator: #b04a00;
+  --syn-preprocessor: #8b5a00;
+  --syn-macro: #a13b8e;
+  --syn-variable: #8a4b00;
+
+  /* Stats */
+  --track: #dfe4d9;
+  --indicator-idle: #aab5a5;
+  --indicator-running: #2ea043;
+  --indicator-paused: #d29922;
+  --indicator-complete: var(--success);
+}
+
+:root.dark {
+  color-scheme: dark;
+
+  --ink: #e6edf3;
+  --muted: #8b949e;
+  --paper: #0d1117;
+  --card: #161b22;
+  --line: #30363d;
+
+  --brand-text: #ef705c;
+
+  --accent: #d29922;
+  --accent-strong: #bb8009;
+  --focus: #58a6ff;
+  --danger: #ff7b72;
+  --success: #2ea043;
+
+  --control-bg: #21262d;
+  --control-border: #8b949e;
+  --control-text: #e6edf3;
+  --control-hover-bg: #30363d;
+  --control-hover-border: #58a6ff;
+  --control-hover-text: #ffffff;
+  --toggle-on-bg: #1f3a5f;
+  --toggle-on-border: #58a6ff;
+  --toggle-on-text: #c6e3ff;
+  --toggle-warn-bg: #3d2b13;
+  --toggle-warn-border: #d29922;
+  --toggle-warn-text: #ffd580;
+  --panel-border: #8b949e;
+  --shadow-panel: 0 14px 35px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 18px 70px rgba(0, 0, 0, 0.6);
+
+  --code-bg: #161b22;
+  --code-bg-focus: #1b222c;
+  --code-text: #8b949e;
+  --code-meta: #8b949e;
+  --code-ring: var(--accent);
+  --char-pending: #8b949e;
+  --cursor-shadow: rgba(210, 153, 34, 0.25);
+  --correct-fg: #7ee787;
+  --correct-bg: #183b24;
+  --incorrect-fg: #ff7b72;
+  --incorrect-bg: #5a2020;
+  --scrollbar-thumb: #8b949e;
+  --scrollbar-track: #21262d;
+  --badge-bg: #21262d;
+  --badge-fg: #c9d1d9;
+  --dot-edge: rgba(0, 0, 0, 0.3);
+
+  --syn-keyword: #ff7b72;
+  --syn-string: #a5d6ff;
+  --syn-comment: #8b949e;
+  --syn-number: #79c0ff;
+  --syn-literal: #d2a8ff;
+  --syn-function: #d2a8ff;
+  --syn-type: #ffa657;
+  --syn-decorator: #d2a8ff;
+  --syn-preprocessor: #79c0ff;
+  --syn-macro: #d2a8ff;
+  --syn-variable: #ffa657;
+
+  --track: #30363d;
+  --indicator-idle: #6e7681;
+}

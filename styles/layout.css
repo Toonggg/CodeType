@@ -1,0 +1,427 @@
+/* Layout: topbar, hero, controls, options panel, notices, explanation, responsive. */
+
+/* --- Topbar ----------------------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 58px;
+  height: 76px;
+  padding: 0 clamp(24px, 6vw, 92px);
+  border-bottom: 1px solid var(--line);
+  background: var(--topbar-bg);
+}
+
+.brand {
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.brand-mark {
+  margin-right: 7px;
+  color: var(--brand);
+  font-family: var(--mono);
+  font-size: 16px;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.theme-toggle .icon-sun,
+:root.dark .theme-toggle .icon-moon {
+  display: none;
+}
+
+:root.dark .theme-toggle .icon-sun {
+  display: block;
+}
+
+.noscript {
+  margin: 0;
+  padding: 12px clamp(24px, 6vw, 92px);
+  background: var(--toggle-warn-bg);
+  color: var(--toggle-warn-text);
+  font-size: 14px;
+}
+
+/* --- Page shell and hero ------------------------------------------------------ */
+
+.shell {
+  max-width: 1280px;
+  margin: auto;
+  padding: 58px 28px 34px;
+}
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 40px;
+}
+
+.hero-title {
+  margin: 18px 0 22px;
+  font-size: clamp(46px, 6vw, 76px);
+  font-weight: 600;
+  line-height: 0.93;
+  letter-spacing: -0.075em;
+}
+
+.hero-title em {
+  color: var(--brand-text);
+  font-style: normal;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+}
+
+.hero-note {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 8px;
+  padding: 2px 0 2px 24px;
+  border-left: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.hero-note p {
+  margin: 0;
+}
+
+.hero-note strong {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.spark {
+  color: var(--brand);
+  font-size: 18px;
+}
+
+/* --- Controls row --------------------------------------------------------------- */
+
+.controls {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 17px;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.source-control {
+  flex: 0 1 430px;
+  width: min(430px, 42%);
+  min-width: 280px;
+}
+
+.select-wrap {
+  position: relative;
+  width: 100%;
+}
+
+/* --- Options menu --------------------------------------------------------------- */
+
+.options-menu {
+  position: relative;
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.options-menu summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 35px;
+  padding: 0 38px 0 16px;
+  border: 1px solid var(--control-border);
+  border-radius: 4px;
+  background: var(--control-bg);
+  color: var(--control-text);
+  font: 12px/33px var(--sans);
+  list-style: none;
+  cursor: pointer;
+}
+
+.options-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.options-menu[open] summary {
+  border-color: var(--control-hover-border);
+  background: var(--control-hover-bg);
+}
+
+.options-panel {
+  position: absolute;
+  z-index: 5;
+  top: 43px;
+  right: 0;
+  width: min(620px, calc(100vw - 2rem));
+  padding: 6px 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: var(--card);
+  box-shadow: var(--shadow-panel);
+}
+
+.option-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 0 10px 100px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  position: relative;
+  min-width: 0;
+}
+
+.option-row:first-child {
+  border-top: 0;
+}
+
+/* The legend sits in the left gutter, level with the row's first line of controls. */
+.option-label {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  display: flex;
+  align-items: center;
+  width: 92px;
+  height: 35px;
+  padding: 0;
+  color: var(--muted);
+  font: 11px var(--mono);
+  letter-spacing: 0.1em;
+}
+
+.github-form {
+  display: flex;
+  flex-basis: 100%;
+  gap: 8px;
+}
+
+.number-control {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 35px;
+  color: var(--muted);
+  font: 11px var(--mono);
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.range-total {
+  color: var(--muted);
+  font: 11px var(--mono);
+  letter-spacing: 0.08em;
+}
+
+.form-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+/* Live regions stay in the page when empty so new messages are announced. */
+.form-error[data-empty="true"],
+.notice[data-empty="true"] {
+  height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+}
+
+/* --- Notice bar ------------------------------------------------------------------ */
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: -5px 0 17px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 13px;
+}
+
+.notice p {
+  flex: 1;
+  margin: 0;
+}
+
+.notice-dismiss {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.notice-dismiss svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* --- Explanation ------------------------------------------------------------------ */
+
+.explanation {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 48px;
+  margin-top: 38px;
+  padding: 46px 0 8px;
+  border-top: 1px solid var(--line);
+}
+
+.explanation h2 {
+  margin: 12px 0 0;
+  font-size: 30px;
+  letter-spacing: -0.05em;
+}
+
+.explanation-copy {
+  max-width: 650px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.explanation-copy p {
+  margin: 0 0 12px;
+}
+
+.explanation-copy strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.shortcuts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 16px;
+  margin: 18px 0 12px;
+}
+
+.shortcuts dt {
+  white-space: nowrap;
+}
+
+.shortcuts dd {
+  margin: 0;
+}
+
+/* --- Focus mode (U9, C14) ---------------------------------------------------------
+ * The surroundings blur while typing. The page keeps scrolling and the card keeps
+ * its size, so the stats and Restart stay reachable on short screens. */
+
+body.challenge-active :is(.topbar, .hero, .controls, .notice, .explanation) {
+  filter: blur(6px);
+  opacity: 0.42;
+  pointer-events: none;
+  transition:
+    filter 0.2s,
+    opacity 0.2s;
+}
+
+body.challenge-active .practice-card {
+  position: relative;
+  z-index: 2;
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.2s;
+}
+
+/* --- Responsive (C15) ---------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .source-control {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  .topbar {
+    gap: 20px;
+    padding: 0 20px;
+  }
+
+  .shell {
+    padding: 40px 18px 25px;
+  }
+
+  .hero {
+    display: block;
+  }
+
+  .hero-note {
+    margin-top: 28px;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+
+  .source-control {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .options-menu {
+    margin-left: 0;
+  }
+
+  .options-panel {
+    position: static;
+    width: auto;
+    margin-top: 8px;
+  }
+
+  .option-row {
+    padding-left: 0;
+  }
+
+  .option-label {
+    position: static;
+    width: 100%;
+    height: auto;
+  }
+
+  .explanation {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin-top: 32px;
+    padding-top: 38px;
+  }
+}

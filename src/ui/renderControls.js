@@ -21,27 +21,32 @@ function renderRange(els, { item, document }) {
   els.rangeTotal.textContent = `of ${total}`;
 }
 
-function setToggle(button, enabled, label) {
+/**
+ * The accessible name stays constant; aria-pressed carries the state, and the
+ * visible on/off hint is hidden from assistive technology.
+ */
+function setToggle(button, enabled) {
   button.setAttribute("aria-pressed", String(enabled));
-  button.textContent = `${label} ${enabled ? "on" : "off"}`;
+  const state = button.querySelector(".toggle-state");
+  if (state) state.textContent = enabled ? "on" : "off";
 }
 
 export function renderControls(els, state, prev) {
   const settings = state.settings;
   const before = prev?.settings;
   if (!before || settings.punishment !== before.punishment) {
-    setToggle(els.punishmentToggle, settings.punishment, "⚡ Punishment");
+    setToggle(els.punishmentToggle, settings.punishment);
   }
   if (!before || settings.randomStart !== before.randomStart) {
-    setToggle(els.randomStartToggle, settings.randomStart, "↝ Random start");
+    setToggle(els.randomStartToggle, settings.randomStart);
     // "New start" rerolls; Restart retries the same start (U8).
     els.newStart.hidden = !settings.randomStart;
   }
   if (!before || settings.autoIndent !== before.autoIndent) {
-    setToggle(els.autoIndentToggle, settings.autoIndent, "⇥ Auto-indent");
+    setToggle(els.autoIndentToggle, settings.autoIndent);
   }
   if (!before || settings.skipComments !== before.skipComments) {
-    setToggle(els.skipCommentsToggle, settings.skipComments, "⌗ Skip comments");
+    setToggle(els.skipCommentsToggle, settings.skipComments);
   }
   if (!before || settings.countdownSeconds !== before.countdownSeconds) {
     els.countdownSeconds.value = String(settings.countdownSeconds);

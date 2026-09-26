@@ -35,7 +35,7 @@ import { populateSourceOptions, renderControls } from "./ui/renderControls.js";
 import { renderStats } from "./ui/renderStats.js";
 import { renderStatus } from "./ui/renderStatus.js";
 import { createTargetView } from "./ui/renderTarget.js";
-import { renderTheme } from "./ui/theme.js";
+import { isDark, renderTheme, watchSystemTheme } from "./ui/theme.js";
 
 /** Loads the saved import, migrating old records and discarding unusable ones. */
 function loadImport() {
@@ -167,6 +167,7 @@ export function createApp(
   /** Applies the side effects of a status. The only place that changes them. */
   function enter(status, payload) {
     const effects = effectsFor(status);
+    const wasFocusMode = effectsFor(store.get().status).focusMode;
     if (!effects.countdownActive) stopCountdown();
     if (effects.timerRunning) {
       stopwatch.start();
@@ -182,6 +183,10 @@ export function createApp(
     if (effects.countdownActive) startCountdown(payload.seconds);
     if (effects.focus === "input" && doc.activeElement !== els.input) els.input.focus();
     if (effects.focus === "release" && doc.activeElement === els.input) els.input.blur();
+    // The page no longer locks scrolling in focus mode (U9); bring the card into view.
+    if (effects.focusMode && !wasFocusMode) {
+      els.practiceCard.scrollIntoView?.({ block: "nearest" });
+    }
   }
 
   /** Runs an event through the state machine and applies the result. */
@@ -495,7 +500,7 @@ export function createApp(
     toggleAutoIndent: () => setAutoIndent(!store.get().settings.autoIndent),
     toggleSkipComments: () => setSkipComments(!store.get().settings.skipComments),
     setCountdown,
-    toggleTheme: () => setTheme(store.get().settings.theme === "dark" ? "light" : "dark"),
+    toggleTheme: () => setTheme(isDark(store.get().settings.theme, win) ? "light" : "dark"),
     toggleGithubForm() {
       const open = !store.get().githubFormOpen;
       store.set({ githubFormOpen: open, importError: null });
@@ -528,6 +533,7 @@ export function createApp(
     });
     enter(STATUS.IDLE);
     bindEvents(els, actions, { doc, win, signal: lifetime.signal });
+    watchSystemTheme(els, () => store.get().settings.theme, { win, signal: lifetime.signal });
   }
 
   /** Removes every listener and timer (used by tests). */
