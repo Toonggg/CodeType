@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeType — Practice with real code</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#practice" aria-label="CodeType home"><span class="brand-mark">&gt;_</span> CodeType</a>
+    <div class="topbar-actions">
+      <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Switch to dark mode">☾</button>
+    </div>
+  </header>
+
+  <main id="practice" class="shell">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">TYPING TRAINING FOR DEVELOPERS</p>
+        <h1>Ship code<br><em>by touch.</em></h1>
+        <p class="lede">Build muscle memory with lines from the codebases you love.</p>
+      </div>
+      <div class="hero-note">
+        <span class="spark">✦</span>
+        <p>Every keystroke<br><strong>makes you faster.</strong></p>
+      </div>
+    </section>
+
+    <section class="controls" aria-label="Practice settings">
+      <div class="control-group source-control">
+        <span class="control-label">EXAMPLE OR FILE</span>
+        <div class="select-wrap">
+          <select id="source-select" aria-label="Choose source">
+            <option value="python-stdlib">Python · asyncio runner</option>
+            <option value="python-requests">Python · Requests session</option>
+            <option value="cpp-stdlib">C++ · libc++ algorithm</option>
+            <option value="rust-stdlib">Rust · UTF-8 strings</option>
+            <option value="custom">My imported code</option>
+          </select>
+        </div>
+      </div>
+      <details class="options-menu">
+        <summary>Options <span aria-hidden="true"></span></summary>
+        <div class="options-panel">
+          <div class="option-row">
+            <span class="option-label">IMPORT CODE</span>
+            <button id="import-button" class="import-button">＋ Local file</button>
+            <button id="github-button" class="import-button">⌘ GitHub file</button>
+          </div>
+          <div class="option-row">
+            <span class="option-label">CHALLENGE</span>
+            <button id="punishment-toggle" class="import-button" type="button" aria-pressed="false">⚡ Punishment off</button>
+            <button id="random-start-toggle" class="import-button" type="button" aria-pressed="false">↝ Random start off</button>
+            <label class="countdown-control">COUNTDOWN
+              <input id="countdown-seconds" type="number" min="0" max="60" step="1" value="0" aria-label="Countdown seconds" />
+              <span>sec</span>
+            </label>
+            <button id="start-countdown" class="import-button start-countdown" type="button">▶ Start</button>
+          </div>
+        </div>
+      </details>
+      <input id="file-input" type="file" accept="*/*" hidden />
+      <div id="github-import" class="github-import" hidden>
+        <input id="github-url" type="url" placeholder="https://github.com/user/repo/blob/main/file.py" aria-label="GitHub file URL" />
+        <button id="github-load" class="import-button">Load</button>
+      </div>
+    </section>
+
+    <section class="practice-card">
+      <div class="card-topline">
+        <div class="repo-info">
+          <span id="repo-icon" class="repo-icon">⌘</span>
+          <div><strong id="repo-name">cpython</strong><span id="repo-path">/ Lib / functools.py</span></div>
+        </div>
+        <span class="line-count" id="line-count">08 lines</span>
+      </div>
+
+      <div class="code-window" id="code-window" tabindex="0" role="textbox" aria-label="Code typing area">
+        <div class="code-header"><span></span><span></span><span></span><small id="typing-status">CLICK TO START TYPING</small></div>
+        <pre id="code-display" aria-hidden="true"></pre>
+        <textarea id="typing-input" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Type the code"></textarea>
+        <div class="click-hint">click anywhere to start typing</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span class="stat-label">SPEED</span><strong><span id="wpm">0</span> <small>WPM</small></strong></div>
+        <div class="stat"><span class="stat-label">ACCURACY</span><strong><span id="accuracy">100</span><small>%</small></strong></div>
+        <div class="stat time-stat"><span class="stat-label">TIME <i id="timer-indicator" aria-label="Timer inactive"></i></span><strong id="time">00:00</strong></div>
+        <div class="stat progress-stat"><span class="stat-label">PROGRESS</span><strong><span id="progress">0</span><small>%</small></strong><div class="progress-track"><i id="progress-bar"></i></div></div>
+        <button id="restart" class="restart" aria-label="Restart challenge">↻ <span>Restart</span></button>
+      </div>
+    </section>
+
+    <section class="explanation">
+      <div>
+        <p class="eyebrow">QUICK PRACTICE</p>
+        <h2>How it works</h2>
+      </div>
+      <div class="explanation-copy">
+        <p>Choose an example or load any code file, then type the highlighted code exactly as shown. Spaces, tabs, and line breaks are part of the challenge, while your speed and accuracy update as you type.</p>
+        <p>Use <strong>Local file</strong> or paste a file URL with <strong>GitHub file</strong>. CodeType detects the file extension and applies the closest available syntax colors.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
