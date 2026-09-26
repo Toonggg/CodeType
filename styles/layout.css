@@ -398,8 +398,15 @@ body.challenge-active .practice-card {
     width: 100%;
   }
 
+  /* The open panel flows in the page; the menu must not grow to the panel's widest row. */
   .options-menu {
+    flex: 1 1 100%;
+    min-width: 0;
     margin-left: 0;
+  }
+
+  .options-menu summary {
+    width: fit-content;
   }
 
   .options-panel {
@@ -412,8 +419,10 @@ body.challenge-active .practice-card {
     padding-left: 0;
   }
 
+  /* Floated, the legend is laid out like a block instead of on the fieldset border. */
   .option-label {
     position: static;
+    float: left;
     width: 100%;
     height: auto;
   }

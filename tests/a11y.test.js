@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { STATUS } from "../src/state.js";
 import { mountApp, typeValue } from "./helpers/mount.js";
@@ -62,5 +63,34 @@ describe("live status and progress (A3, A8, B25)", () => {
       `COMPLETE · ${els.wpm.textContent} WPM · ${els.accuracy.textContent}% ACCURACY`,
     );
     expect(Number(els.wpm.textContent)).toBeGreaterThan(0);
+  });
+});
+
+describe("labels, grouping and page metadata (A7, H4, H6, H12)", () => {
+  const html = readFileSync("index.html", "utf8");
+
+  test("the source select has a visible label and no duplicate aria-label", () => {
+    const label = document.querySelector('label[for="source-select"]');
+    expect(label.textContent).toBe("EXAMPLE OR FILE");
+    expect(els.sourceSelect.hasAttribute("aria-label")).toBe(false);
+  });
+
+  test("every option row is a fieldset named by its legend", () => {
+    const rows = [...document.querySelectorAll(".options-panel .option-row")];
+    expect(rows.length).toBe(4);
+    for (const row of rows) {
+      expect(row.tagName).toBe("FIELDSET");
+      expect(row.firstElementChild.tagName).toBe("LEGEND");
+    }
+    expect(els.rangeRow.tagName).toBe("FIELDSET");
+  });
+
+  test("the page has a description, a noscript notice and untranslated code", () => {
+    expect(html).toMatch(/<meta\s+name="description"\s+content="[^"]{40,}"/);
+    expect(html).toMatch(/<meta name="theme-color"/);
+    expect(document.querySelector("noscript")).not.toBeNull();
+    expect(els.display.getAttribute("translate")).toBe("no");
+    expect(els.targetText.getAttribute("translate")).toBe("no");
+    expect(els.repoName.closest(".repo-info").getAttribute("translate")).toBe("no");
   });
 });

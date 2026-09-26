@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Typing practice for developers: type real code from open-source projects or your own files and track speed and accuracy."
+    />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f4f5f0" />
     <title>CodeType — Practice with real code</title>
@@ -58,6 +62,11 @@
         </button>
       </div>
     </header>
+    <noscript>
+      <p class="noscript">
+        CodeType needs JavaScript. Enable it in your browser to start practicing.
+      </p>
+    </noscript>
 
     <main id="practice" class="shell">
       <section class="hero">
@@ -74,18 +83,18 @@
 
       <section class="controls" aria-label="Practice settings">
         <div class="control-group source-control">
-          <span class="control-label label-caps">EXAMPLE OR FILE</span>
+          <label class="control-label label-caps" for="source-select">EXAMPLE OR FILE</label>
           <div class="select-wrap">
             <!-- Options are generated from src/data/examples.js at boot. -->
-            <select id="source-select" class="select" aria-label="Choose source"></select>
+            <select id="source-select" class="select"></select>
             <span class="chevron" aria-hidden="true"></span>
           </div>
         </div>
         <details class="options-menu">
           <summary>Options <span class="chevron" aria-hidden="true"></span></summary>
           <div class="options-panel">
-            <div class="option-row">
-              <span class="option-label">IMPORT CODE</span>
+            <fieldset class="option-row">
+              <legend class="option-label">IMPORT CODE</legend>
               <button id="import-button" class="btn" type="button">
                 <span class="btn-icon" aria-hidden="true">＋</span> Local file
               </button>
@@ -118,9 +127,9 @@
                 <button id="github-load" class="btn btn--narrow" type="submit">Load</button>
               </form>
               <p id="import-error" class="form-error" role="alert" data-empty="true"></p>
-            </div>
-            <div id="range-row" class="option-row" hidden>
-              <span class="option-label">LINES</span>
+            </fieldset>
+            <fieldset id="range-row" class="option-row" hidden>
+              <legend class="option-label">LINES</legend>
               <label class="number-control"
                 >FROM
                 <input
@@ -144,9 +153,9 @@
                 />
               </label>
               <span id="range-total" class="range-total"></span>
-            </div>
-            <div class="option-row">
-              <span class="option-label">TYPING</span>
+            </fieldset>
+            <fieldset class="option-row">
+              <legend class="option-label">TYPING</legend>
               <button
                 id="auto-indent-toggle"
                 class="btn btn--wide"
@@ -165,9 +174,9 @@
                 <span class="btn-icon" aria-hidden="true">⌗</span> Skip comments
                 <span class="toggle-state" aria-hidden="true">on</span>
               </button>
-            </div>
-            <div class="option-row">
-              <span class="option-label">CHALLENGE</span>
+            </fieldset>
+            <fieldset class="option-row">
+              <legend class="option-label">CHALLENGE</legend>
               <button
                 id="punishment-toggle"
                 class="btn btn--wide btn--warn"
@@ -203,7 +212,7 @@
               <button id="start-countdown" class="btn btn--narrow" type="button">
                 <span class="btn-icon" aria-hidden="true">▶</span> Start
               </button>
-            </div>
+            </fieldset>
           </div>
         </details>
       </section>
@@ -223,7 +232,7 @@
 
       <section class="practice-card">
         <div class="card-topline">
-          <div class="repo-info">
+          <div class="repo-info" translate="no">
             <span id="repo-icon" class="repo-icon"></span>
             <div>
               <strong id="repo-name"></strong><span id="repo-path" class="repo-path"></span>
@@ -243,9 +252,9 @@
           </div>
           <!-- One span per character is noisy for screen readers, so the display is
                hidden from them and the plain text is exposed in the region below. -->
-          <pre id="code-display" class="code-display" aria-hidden="true"></pre>
+          <pre id="code-display" class="code-display" aria-hidden="true" translate="no"></pre>
           <div class="visually-hidden" role="region" aria-label="Code to type">
-            <pre id="target-text"></pre>
+            <pre id="target-text" translate="no"></pre>
           </div>
           <p id="typing-help" class="visually-hidden">
             Type the code from the Code to type region exactly, including spaces and line breaks.
