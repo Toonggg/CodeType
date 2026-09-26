@@ -46,6 +46,47 @@
     <link rel="stylesheet" href="/styles/index.css" />
   </head>
   <body>
+    <!-- Icons (U10, A11): referenced with <use>; stroke and colour come from .icon in base.css. -->
+    <svg class="icon-sprite" width="0" height="0" aria-hidden="true" hidden>
+      <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />
+      </symbol>
+      <symbol id="i-indent" viewBox="0 0 24 24">
+        <path d="M21 6H11M21 12H11M21 18H11M3 8l4 4-4 4" />
+      </symbol>
+      <symbol id="i-comment" viewBox="0 0 24 24"><path d="M11 4 7 20M17 4l-4 16" /></symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" /></symbol>
+      <symbol id="i-shuffle" viewBox="0 0 24 24">
+        <path d="M16 4h4v4M4 20 20 4M20 16v4h-4M14 14l6 6M4 4l5 5" />
+      </symbol>
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="M8 5v14l11-7z" fill="currentColor" />
+      </symbol>
+      <symbol id="i-restart" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 2.64-6.36L3 8M3 3v5h5" />
+      </symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12" /></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24">
+        <path d="M12 3a7 7 0 0 0 9 9 9 9 0 1 1-9-9z" />
+      </symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" />
+        <path
+          d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+        />
+      </symbol>
+      <symbol id="i-spark" viewBox="0 0 24 24">
+        <path
+          d="M12 2c.8 6 4 9.2 10 10-6 .8-9.2 4-10 10-.8-6-4-9.2-10-10 6-.8 9.2-4 10-10z"
+          fill="currentColor"
+          stroke="none"
+        />
+      </symbol>
+    </svg>
     <header class="topbar">
       <a class="brand" href="#practice" aria-label="CodeType home"
         ><span class="brand-mark">&gt;_</span> CodeType</a
@@ -57,8 +98,8 @@
           type="button"
           aria-label="Switch to dark mode"
         >
-          <span class="icon-moon" aria-hidden="true">☾</span>
-          <span class="icon-sun" aria-hidden="true">☀</span>
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon" /></svg>
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun" /></svg>
         </button>
       </div>
     </header>
@@ -76,7 +117,9 @@
           <p class="lede">Build muscle memory with lines from the codebases you love.</p>
         </div>
         <div class="hero-note">
-          <span class="spark" aria-hidden="true">✦</span>
+          <span class="spark" aria-hidden="true"
+            ><svg class="icon"><use href="#i-spark" /></svg
+          ></span>
           <p>Every keystroke<br /><strong>makes you faster.</strong></p>
         </div>
       </section>
@@ -96,7 +139,10 @@
             <fieldset class="option-row">
               <legend class="option-label">IMPORT CODE</legend>
               <button id="import-button" class="btn" type="button">
-                <span class="btn-icon" aria-hidden="true">＋</span> Local file
+                <span class="btn-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-plus" /></svg
+                ></span>
+                Local file
               </button>
               <button
                 id="github-button"
@@ -105,10 +151,16 @@
                 aria-expanded="false"
                 aria-controls="github-form"
               >
-                <span class="btn-icon" aria-hidden="true">⌘</span> GitHub file
+                <span class="btn-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-download" /></svg
+                ></span>
+                GitHub file
               </button>
               <button id="forget-import" class="btn btn--wide" type="button" disabled>
-                <span class="btn-icon" aria-hidden="true">✕</span> Forget import
+                <span class="btn-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-trash" /></svg
+                ></span>
+                Forget import
               </button>
               <!-- Inside the panel so its programmatic click does not close the menu. -->
               <input id="file-input" type="file" hidden />
@@ -162,7 +214,10 @@
                 type="button"
                 aria-pressed="true"
               >
-                <span class="btn-icon" aria-hidden="true">⇥</span> Auto-indent
+                <span class="btn-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-indent" /></svg
+                ></span>
+                Auto-indent
                 <span class="toggle-state" aria-hidden="true">on</span>
               </button>
               <button
@@ -171,7 +226,10 @@
                 type="button"
                 aria-pressed="true"
               >
-                <span class="btn-icon" aria-hidden="true">⌗</span> Skip comments
+                <span class="btn-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-comment" /></svg
+                ></span>
+                Skip comments
                 <span class="toggle-state" aria-hidden="true">on</span>
               </button>
             </fieldset>
@@ -183,7 +241,10 @@
                 type="button"
                 aria-pressed="false"
               >
-                <span class="btn-icon" aria-hidden="true">⚡</span> Punishment
+                <span class="btn-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-zap" /></svg
+                ></span>
+                Punishment
                 <span class="toggle-state" aria-hidden="true">off</span>
               </button>
               <button
@@ -192,7 +253,10 @@
                 type="button"
                 aria-pressed="false"
               >
-                <span class="btn-icon" aria-hidden="true">↝</span> Random start
+                <span class="btn-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-shuffle" /></svg
+                ></span>
+                Random start
                 <span class="toggle-state" aria-hidden="true">off</span>
               </button>
               <label class="number-control"
@@ -210,7 +274,10 @@
                 <span>sec</span>
               </label>
               <button id="start-countdown" class="btn btn--narrow" type="button">
-                <span class="btn-icon" aria-hidden="true">▶</span> Start
+                <span class="btn-icon" aria-hidden="true"
+                  ><svg class="icon"><use href="#i-play" /></svg
+                ></span>
+                Start
               </button>
             </fieldset>
           </div>
@@ -226,7 +293,7 @@
           aria-label="Dismiss message"
           hidden
         >
-          ×
+          <svg class="icon" aria-hidden="true"><use href="#i-x" /></svg>
         </button>
       </div>
 
@@ -307,10 +374,16 @@
           </div>
           <div class="stats-actions">
             <button id="new-start" class="btn btn--compact" type="button" hidden>
-              <span class="btn-icon" aria-hidden="true">↝</span> New start
+              <span class="btn-icon" aria-hidden="true"
+                ><svg class="icon"><use href="#i-shuffle" /></svg
+              ></span>
+              New start
             </button>
             <button id="restart" class="btn btn--compact" type="button">
-              <span class="btn-icon" aria-hidden="true">↻</span> Restart
+              <span class="btn-icon" aria-hidden="true"
+                ><svg class="icon"><use href="#i-restart" /></svg
+              ></span>
+              Restart
             </button>
           </div>
         </div>

@@ -44,6 +44,17 @@ body {
   letter-spacing: 0.16em;
 }
 
+/* Inline SVG icons (U10). The sprite symbols in index.html inherit these. */
+.icon {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* Buttons (C9: the shared class, formerly .import-button). */
 .btn {
   display: inline-flex;

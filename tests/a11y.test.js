@@ -94,3 +94,28 @@ describe("labels, grouping and page metadata (A7, H4, H6, H12)", () => {
     expect(els.repoName.closest(".repo-info").getAttribute("translate")).toBe("no");
   });
 });
+
+describe("icons (U10, A11, H14)", () => {
+  test("no Unicode symbol icons remain in the page", () => {
+    expect(document.body.textContent).not.toMatch(/[☾☀＋⌘✕⇥⌗⚡↝▶↻×✦]/u);
+  });
+
+  test("every icon references a sprite symbol and is hidden from assistive technology", () => {
+    const uses = [...document.querySelectorAll("svg.icon use")];
+    expect(uses.length).toBeGreaterThanOrEqual(14);
+    for (const use of uses) {
+      expect(document.querySelector(use.getAttribute("href"))?.tagName).toBe("symbol");
+      expect(use.closest('[aria-hidden="true"]')).not.toBeNull();
+    }
+    const sprite = document.querySelector(".icon-sprite");
+    expect(sprite.hasAttribute("hidden")).toBe(true);
+    expect(sprite.getAttribute("width")).toBe("0");
+  });
+
+  test("every button keeps a text name", () => {
+    for (const button of document.querySelectorAll("button")) {
+      const name = button.getAttribute("aria-label") ?? button.textContent.trim();
+      expect(name, button.id).not.toBe("");
+    }
+  });
+});
