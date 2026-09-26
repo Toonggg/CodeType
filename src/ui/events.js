@@ -1,0 +1,102 @@
+/**
+ * All DOM event listeners, in one place. Handlers stay thin: they translate DOM
+ * events into controller actions.
+ */
+export function bindEvents(els, actions, { doc = document, win = window, signal } = {}) {
+  const options = { signal };
+  // Typing area.
+  els.input.addEventListener("input", () => actions.input(els.input.value), options);
+  els.input.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key !== "Tab") return;
+      event.preventDefault();
+      actions.tab();
+    },
+    options,
+  );
+  els.input.addEventListener("focus", actions.focus, options);
+  els.input.addEventListener("blur", actions.blur, options);
+  els.window.addEventListener("click", () => els.input.focus(), options);
+  // Clicking inside the card must not steal focus from the typing area (which would
+  // pause a running challenge). Form fields keep their normal behaviour.
+  els.practiceCard.addEventListener(
+    "mousedown",
+    (event) => {
+      if (!event.target.closest("input, select, textarea, a, summary")) event.preventDefault();
+    },
+    options,
+  );
+
+  // Session controls.
+  els.restart.addEventListener("click", actions.restart, options);
+  els.startCountdown.addEventListener("click", actions.start, options);
+
+  // Settings.
+  els.punishmentToggle.addEventListener("click", actions.togglePunishment, options);
+  els.randomStartToggle.addEventListener("click", actions.toggleRandomStart, options);
+  els.countdownSeconds.addEventListener(
+    "change",
+    () => actions.setCountdown(els.countdownSeconds.value),
+    options,
+  );
+  els.themeToggle.addEventListener("click", actions.toggleTheme, options);
+
+  // Source and imports.
+  els.sourceSelect.addEventListener(
+    "change",
+    () => actions.selectSource(els.sourceSelect.value),
+    options,
+  );
+  els.importButton.addEventListener("click", () => els.fileInput.click(), options);
+  els.fileInput.addEventListener(
+    "change",
+    () => actions.importLocalFile(els.fileInput.files[0]),
+    options,
+  );
+  els.githubButton.addEventListener(
+    "click",
+    () => {
+      els.githubImport.hidden = !els.githubImport.hidden;
+      if (!els.githubImport.hidden) els.githubUrl.focus();
+    },
+    options,
+  );
+  els.githubLoad.addEventListener(
+    "click",
+    () => actions.importGithub(els.githubUrl.value),
+    options,
+  );
+
+  // Page-level.
+  doc.addEventListener(
+    "click",
+    (event) => {
+      if (els.optionsMenu.open && !els.optionsMenu.contains(event.target)) {
+        els.optionsMenu.open = false;
+      }
+    },
+    options,
+  );
+  doc.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key === "Escape") actions.escape(event);
+    },
+    options,
+  );
+  doc.addEventListener(
+    "visibilitychange",
+    () => {
+      if (doc.hidden) actions.hide();
+    },
+    options,
+  );
+  win.addEventListener(
+    "pageshow",
+    (event) => {
+      if (event.persisted) actions.pageRestored();
+    },
+    options,
+  );
+}

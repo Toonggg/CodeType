@@ -20,6 +20,8 @@ const SELECTORS = {
   themeToggle: "#theme-toggle",
   restart: "#restart",
   optionsMenu: ".options-menu",
+  optionsSummary: ".options-menu summary",
+  practiceCard: ".practice-card",
   repoName: "#repo-name",
   repoPath: "#repo-path",
   repoIcon: "#repo-icon",

@@ -788,6 +788,15 @@ body.dark pre {
   background: var(--coral);
   animation: timer-pulse 0.7s ease-in-out infinite;
 }
+.time-stat.complete #timer-indicator {
+  background: #2ea043;
+}
+.code-window.complete {
+  outline-color: #2ea043;
+}
+.code-window.complete .click-hint {
+  opacity: 0;
+}
 @keyframes timer-pulse {
   50% {
     opacity: 0.35;
