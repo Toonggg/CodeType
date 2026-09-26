@@ -177,6 +177,9 @@ export function createApp(
       stopTick();
     }
     els.input.readOnly = !effects.inputEnabled;
+    // A finished run is inert: skip it so the next Tab reaches Restart. Clicks and
+    // Restart still focus it programmatically.
+    els.input.tabIndex = status === STATUS.COMPLETE ? -1 : 0;
     doc.body.classList.toggle("challenge-active", effects.focusMode);
     // Update state before moving focus: focus/blur handlers dispatch events too.
     store.set({ status, elapsedMs: stopwatch.elapsedMs() });
@@ -287,12 +290,21 @@ export function createApp(
     if (isComplete(session)) dispatch(EVENT.FINISH);
   }
 
-  /** Tab inserts exactly the whitespace the target expects at the caret (B1). */
+  /**
+   * Tab inserts exactly the whitespace the target expects at the caret (B1).
+   * Returns false when Tab should move focus instead: nothing to insert and no
+   * run in progress, so keyboard users can always Tab past the typing area. A
+   * running challenge keeps every Tab, so a stray press never pauses it.
+   */
   function insertIndent() {
     const { status, session } = store.get();
-    if (!acceptsInput(status)) return;
+    if (!acceptsInput(status)) return false;
     const run = smartTab(session.target, session.typed.length);
-    if (run.length) handleInput(els.input.value + run.join(""));
+    if (run.length) {
+      handleInput(els.input.value + run.join(""));
+      return true;
+    }
+    return status === STATUS.RUNNING;
   }
 
   // --- Settings (Q6: one setter per setting, state is the source of truth) ----

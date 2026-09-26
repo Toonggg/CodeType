@@ -325,7 +325,8 @@
           </div>
           <p id="typing-help" class="visually-hidden">
             Type the code from the Code to type region exactly, including spaces and line breaks.
-            Tab inserts the expected indentation. Escape pauses or resumes; Escape twice restarts.
+            Tab inserts the expected indentation; with nothing to indent it moves on, except during
+            a run, so press Escape to pause first. Escape pauses or resumes; Escape twice restarts.
             Control+Enter or Command+Enter also restarts.
           </p>
           <textarea
@@ -412,7 +413,10 @@
           </p>
           <dl class="shortcuts" aria-label="Keyboard shortcuts">
             <dt><kbd>Tab</kbd></dt>
-            <dd>Insert the indentation the code expects</dd>
+            <dd>
+              Insert the indentation the code expects; with none to insert, move on (during a run,
+              press <kbd>Esc</kbd> first)
+            </dd>
             <dt><kbd>Esc</kbd></dt>
             <dd>Pause or resume; close the Options menu; leave the typing area when idle</dd>
             <dt><kbd>Esc</kbd> <kbd>Esc</kbd></dt>

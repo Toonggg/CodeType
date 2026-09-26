@@ -33,9 +33,9 @@ function handleTypingKeydown(event, actions) {
   if (event.isComposing) return;
   const shortcut = event.ctrlKey || event.metaKey;
   if (event.key === "Tab" && !event.shiftKey && !event.altKey && !shortcut) {
-    // Shift+Tab is left alone so keyboard users can always leave (A1).
-    event.preventDefault();
-    actions.tab();
+    // Shift+Tab is left alone so keyboard users can always leave (A1); Tab moves
+    // focus too unless it inserted indentation or a run is in progress.
+    if (actions.tab()) event.preventDefault();
   } else if (NAVIGATION_KEYS.has(event.key)) {
     event.preventDefault();
   } else if (shortcut && ["a", "z", "y"].includes(event.key.toLowerCase())) {

@@ -156,15 +156,63 @@ describe("keyboard (A10, U13)", () => {
     expect(app.store.get().session.typed.length).toBe(3);
   });
 
+  test("a completed run leaves the Tab order until the next start", () => {
+    els.input.focus();
+    typeValue(els, target());
+    expect(app.store.get().status).toBe(STATUS.COMPLETE);
+    expect(els.input.tabIndex).toBe(-1);
+    els.restart.click();
+    expect(els.input.tabIndex).toBe(0);
+    expect(document.activeElement).toBe(els.input);
+  });
+
   test("plain Enter is typed, not treated as a shortcut", () => {
     els.input.focus();
     const event = pressKey(els.input, "Enter");
     expect(event.defaultPrevented).toBe(false);
   });
 
-  test("Shift+Tab is not intercepted, so focus can leave the typing area (A1)", () => {
+  test("Shift+Tab is never intercepted, so focus can always leave (A1)", () => {
     els.input.focus();
+    typeValue(els, "d");
     expect(pressKey(els.input, "Tab", { shiftKey: true }).defaultPrevented).toBe(false);
+  });
+
+  test("Tab moves focus past the typing area when there is nothing to indent", () => {
+    els.input.focus();
+    expect(app.store.get().status).toBe(STATUS.READY);
+    expect(pressKey(els.input, "Tab").defaultPrevented).toBe(false);
+    expect(els.input.value).toBe("");
+  });
+
+  test("Tab inserts indentation when expected, and a running run keeps every Tab", () => {
+    app.actions.toggleAutoIndent(); // off, so the indentation is left to Tab
+    const firstLine = target().split("\n")[0];
+    els.input.focus();
+    typeValue(els, "d");
+    expect(pressKey(els.input, "Tab").defaultPrevented).toBe(true); // running, nothing to insert
+    expect(els.input.value).toBe("d");
+    typeValue(els, `${firstLine}\n`);
     expect(pressKey(els.input, "Tab").defaultPrevented).toBe(true);
+    expect(els.input.value).toBe(`${firstLine}\n    `);
+  });
+
+  test("while paused, Tab moves on unless it can resume with indentation", () => {
+    app.actions.toggleAutoIndent();
+    const firstLine = target().split("\n")[0];
+    els.input.focus();
+    typeValue(els, "de");
+    pressKey(document, "Escape");
+    expect(app.store.get().status).toBe(STATUS.PAUSED);
+    expect(pressKey(els.input, "Tab").defaultPrevented).toBe(false);
+
+    vi.advanceTimersByTime(1000);
+    pressKey(document, "Escape"); // resume
+    typeValue(els, `${firstLine}\n`);
+    vi.advanceTimersByTime(1000); // outside the double-press window
+    pressKey(document, "Escape");
+    expect(app.store.get().status).toBe(STATUS.PAUSED);
+    expect(pressKey(els.input, "Tab").defaultPrevented).toBe(true);
+    expect(app.store.get().status).toBe(STATUS.RUNNING);
   });
 });
