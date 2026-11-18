@@ -17,7 +17,10 @@ export function renderStats(els, state, prev) {
   }
   const final = state.status === STATUS.COMPLETE;
   if (sessionChanged || elapsedMs !== prev.elapsedMs || state.status !== prev.status) {
-    els.wpm.textContent = computeWpm(session.correct, elapsedMs, { final });
-    els.time.textContent = formatTime(elapsedMs / 1000);
+    const correctTyped = Math.max(0, session.correct - (session.insertedCorrect ?? 0));
+    const wpmStr = String(computeWpm(correctTyped, elapsedMs, { final }));
+    const timeStr = formatTime(elapsedMs / 1000);
+    if (els.wpm.textContent !== wpmStr) els.wpm.textContent = wpmStr;
+    if (els.time.textContent !== timeStr) els.time.textContent = timeStr;
   }
 }

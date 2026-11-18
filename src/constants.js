@@ -29,6 +29,9 @@ export const IMPORT_MAX_BYTES = 1_000_000;
 /** At most this many lines are practiced at once; longer files get a line range (B13). */
 export const PRACTICE_MAX_LINES = 400;
 
+/** At most this many characters are practiced at once (PERF-2). */
+export const PRACTICE_MAX_CHARS = 20_000;
+
 /** GitHub requests are aborted after this long (R3). */
 export const FETCH_TIMEOUT_MS = 10_000;
 

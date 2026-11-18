@@ -1,6 +1,25 @@
 import { describe, expect, test } from "vitest";
 import { EXAMPLES } from "../src/data/examples.js";
-import { buildTarget, chooseStartLine, createDocument, languageOf } from "../src/practice.js";
+import {
+  buildTarget,
+  chooseStartLine,
+  countLines,
+  createDocument,
+  languageOf,
+  selectLines,
+  splitLines,
+} from "../src/practice.js";
+
+describe("splitLines / countLines (BUG-2)", () => {
+  test("trailing newline does not create a phantom empty line", () => {
+    expect(splitLines("a\nb\n")).toEqual(["a", "b"]);
+    expect(splitLines("a\nb")).toEqual(["a", "b"]);
+    expect(countLines("a\nb\n")).toBe(2);
+    expect(countLines("a\nb")).toBe(2);
+    expect(createDocument("a\nb\n", "javascript").totalLines).toBe(2);
+    expect(createDocument("a\nb", "javascript").totalLines).toBe(2);
+  });
+});
 
 describe("createDocument / buildTarget", () => {
   test("a target starting inside a docstring is still highlighted as a string (B8)", () => {
@@ -62,7 +81,16 @@ describe("chooseStartLine (B8)", () => {
     expect(chooseStartLine(twenty, { random: () => 0, exclude: 0 })).toBe(5);
   });
 
-  test("short texts start at the top", () => {
-    expect(chooseStartLine(lines(["a", "b", "c"]), { random: () => 0.99 })).toBe(0);
+  test("returns 0 on empty lines array (BUG-1)", () => {
+    expect(chooseStartLine([])).toBe(0);
+  });
+});
+
+describe("selectLines (BUG-1)", () => {
+  test("falls back to full document when range covers only blank lines", () => {
+    const doc = createDocument("a = 1\n\n\n\nb = 2\n", "python");
+    const result = selectLines(doc, { range: { start: 2, end: 4 } });
+    expect(result.emptyRangeFallback).toBe(true);
+    expect(result.lines.map((l) => l.text)).toEqual(["a = 1", "", "b = 2"]);
   });
 });

@@ -47,7 +47,15 @@ function handleTypingKeydown(event, actions) {
 export function bindEvents(els, actions, { doc = document, win = window, signal } = {}) {
   const options = { signal };
   // Typing area.
-  els.input.addEventListener("input", () => actions.input(els.input.value), options);
+  els.input.addEventListener(
+    "input",
+    (event) => {
+      if (event.isComposing) return;
+      actions.input(els.input.value);
+    },
+    options,
+  );
+  els.input.addEventListener("compositionend", () => actions.input(els.input.value), options);
   els.input.addEventListener("keydown", (event) => handleTypingKeydown(event, actions), options);
   els.input.addEventListener(
     "beforeinput",

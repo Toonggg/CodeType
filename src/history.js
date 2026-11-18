@@ -21,7 +21,14 @@ export function emptyHistory() {
 
 /** The history key of a practice item. */
 export function historyKey(item) {
-  return item.id === "custom" ? `import:${item.filename}` : item.id;
+  if (item.id !== "custom") return item.id;
+  const source =
+    item.url ||
+    (item.repo && item.path && item.path !== "/ local file"
+      ? `${item.repo}${item.path}`
+      : item.filename);
+  const range = item.range ? `#L${item.range.start}-${item.range.end}` : "";
+  return `import:${source}${range}`;
 }
 
 const isCount = (value) => Number.isFinite(value) && value >= 0;

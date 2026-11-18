@@ -1,11 +1,11 @@
 /**
  * Languages: display metadata, file-name detection and syntax rule sets.
  *
- * Tokenizer contract: every rule is a [tokenType, RegExp] pair. The tokenizer
- * (tokenize.js) scans left to right; the earliest match wins, ties go to the
- * longest match and then to the rule listed first. Rules therefore do not need
- * to guard against each other: a `#` inside a string is consumed by the string
- * rule before the comment rule can see it.
+ * Tokenizer contract: every rule is a [tokenType, RegExp] or [tokenType, { start, end }]
+ * pair (or an array of them). The tokenizer (tokenize.js) scans left to right;
+ * the earliest match wins, ties go to the longest match and then to the rule listed
+ * first. Rules therefore do not need to guard against each other: a `#` inside a
+ * string is consumed by the string rule before the comment rule can see it.
  *
  * Token types map to CSS classes `syntax-<type>`: comment, string, keyword,
  * literal, type, number, function, decorator, preprocessor, macro, variable.
@@ -15,7 +15,10 @@
 const words = (list) => new RegExp(`\\b(?:${list.trim().split(/\s+/).join("|")})\\b`, "g");
 
 // Shared building blocks.
-const SLASH_COMMENT = ["comment", /\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$)/g];
+const SLASH_COMMENT = [
+  ["comment", /\/\/[^\n]*/g],
+  ["comment", { start: /\/\*/g, end: "*/" }],
+];
 const HASH_COMMENT = ["comment", /#[^\n]*/g];
 /** Single-line strings; an unterminated quote does not swallow the rest of the file. */
 const DOUBLE_STRING = ["string", /"(?:\\[\s\S]|[^"\\\n])*"/g];
@@ -40,10 +43,9 @@ const TEMPLATE_STRING = ["string", /`(?:\\[\s\S]|[^`\\])*`/g];
 export const SYNTAX_RULES = {
   python: [
     HASH_COMMENT,
-    [
-      "string",
-      /(?:\b[rRbBuUfF]{1,2})?(?:"""[\s\S]*?(?:"""|$)|'''[\s\S]*?(?:'''|$)|"(?:\\[\s\S]|[^"\\\n])*"|'(?:\\[\s\S]|[^'\\\n])*')/g,
-    ],
+    ["string", { start: /(?:\b[rRbBuUfF]{1,2})?"""/g, end: '"""' }],
+    ["string", { start: /(?:\b[rRbBuUfF]{1,2})?'''/g, end: "'''" }],
+    ["string", /(?:\b[rRbBuUfF]{1,2})?(?:"(?:\\[\s\S]|[^"\\\n])*"|'(?:\\[\s\S]|[^'\\\n])*')/g],
     ["decorator", /@[A-Za-z_][\w.]*/g],
     [
       "keyword",
@@ -170,7 +172,7 @@ export const SYNTAX_RULES = {
   ],
   java: [
     SLASH_COMMENT,
-    ["string", /"""[\s\S]*?(?:"""|$)/g],
+    ["string", { start: /"""/g, end: '"""' }],
     DOUBLE_STRING,
     SINGLE_STRING,
     ANNOTATION,
@@ -209,7 +211,8 @@ export const SYNTAX_RULES = {
     ["function", /\b[A-Za-z_][\w-]*(?=\s*\(\s*\))/g],
   ],
   generic: [
-    ["comment", /#[^\n]*|\/\/[^\n]*|\/\*[\s\S]*?(?:\*\/|$)/g],
+    ["comment", /#[^\n]*/g],
+    SLASH_COMMENT,
     DOUBLE_STRING,
     SINGLE_STRING,
     [

@@ -21,6 +21,28 @@ describe("historyKey", () => {
     expect(historyKey({ id: "go-strings" })).toBe("go-strings");
     expect(historyKey({ id: "custom", filename: "main.rs" })).toBe("import:main.rs");
   });
+
+  test("two imports with the same filename from different repos keep separate keys (BUG-5)", () => {
+    const item1 = {
+      id: "custom",
+      filename: "utils.py",
+      repo: "user1/repoA",
+      path: "/src/utils.py",
+    };
+    const item2 = {
+      id: "custom",
+      filename: "utils.py",
+      repo: "user2/repoB",
+      path: "/src/utils.py",
+    };
+    expect(historyKey(item1)).not.toBe(historyKey(item2));
+    expect(historyKey(item1)).toBe("import:user1/repoA/src/utils.py");
+    expect(historyKey(item2)).toBe("import:user2/repoB/src/utils.py");
+
+    // Separate ranges on same file also have distinct keys
+    const ranged = { ...item1, range: { start: 1, end: 20 } };
+    expect(historyKey(ranged)).toBe("import:user1/repoA/src/utils.py#L1-20");
+  });
 });
 
 describe("recordRun", () => {

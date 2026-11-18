@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { loadSettings } from "../src/settings.js";
-import { isDark } from "../src/ui/theme.js";
+import { isDark, renderTheme } from "../src/ui/theme.js";
 import { mountApp } from "./helpers/mount.js";
 
 /** A controllable prefers-color-scheme query; jsdom has no matchMedia. */
@@ -179,5 +179,31 @@ describe("the head script and theme.js agree (no flip after loading)", () => {
     const afterLoad = isDark(loadSettings().theme);
     vi.restoreAllMocks();
     expect(painted).toBe(afterLoad);
+  });
+
+  test("renderTheme uses injected win and doc (BUG-8)", () => {
+    const fakeDoc = {
+      documentElement: {
+        classList: {
+          contains: () => false,
+          add: vi.fn(),
+          toggle: vi.fn(),
+          remove: vi.fn(),
+        },
+        offsetHeight: 10,
+      },
+      querySelector: vi.fn(() => ({ setAttribute: vi.fn() })),
+    };
+    const fakeWin = {
+      matchMedia: vi.fn(() => ({ matches: true })),
+    };
+    const fakeEls = {
+      themeToggle: { setAttribute: vi.fn() },
+    };
+    // App with injected doc and win
+    const state = { settings: { theme: null } };
+    renderTheme(fakeEls, state, undefined, { win: fakeWin, doc: fakeDoc });
+    expect(fakeWin.matchMedia).toHaveBeenCalledWith("(prefers-color-scheme: dark)");
+    expect(fakeDoc.documentElement.classList.toggle).toHaveBeenCalledWith("dark", true);
   });
 });

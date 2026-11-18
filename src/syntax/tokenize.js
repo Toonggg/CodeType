@@ -12,20 +12,81 @@
  */
 import { SYNTAX_RULES } from "./languages.js";
 
-function compile(language) {
-  const rules = SYNTAX_RULES[language] ?? SYNTAX_RULES.generic;
-  return rules.map(([type, pattern]) => ({
+function compileRule(type, pattern) {
+  if (
+    pattern &&
+    typeof pattern === "object" &&
+    !(pattern instanceof RegExp) &&
+    "start" in pattern &&
+    "end" in pattern
+  ) {
+    const startPattern = pattern.start;
+    return {
+      type,
+      startRegex: new RegExp(
+        startPattern.source,
+        startPattern.flags.includes("g") ? startPattern.flags : `${startPattern.flags}g`,
+      ),
+      end: pattern.end,
+      lastEnd: -2,
+      next: undefined,
+    };
+  }
+  return {
     type,
-    // A private copy: exec() mutates lastIndex.
     regex: new RegExp(
       pattern.source,
       pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`,
     ),
     next: undefined,
-  }));
+  };
+}
+
+function compile(language) {
+  const rules = SYNTAX_RULES[language] ?? SYNTAX_RULES.generic;
+  const list = [];
+  for (const item of rules) {
+    if (Array.isArray(item) && Array.isArray(item[0])) {
+      for (const [type, pattern] of item) {
+        list.push(compileRule(type, pattern));
+      }
+    } else {
+      const [type, pattern] = item;
+      list.push(compileRule(type, pattern));
+    }
+  }
+  return list;
 }
 
 function findNext(rule, text, from) {
+  if (rule.startRegex) {
+    rule.startRegex.lastIndex = from;
+    let match = rule.startRegex.exec(text);
+    while (match && match[0].length === 0) {
+      rule.startRegex.lastIndex = match.index + 1;
+      match = rule.startRegex.exec(text);
+    }
+    if (!match) return null;
+    const startIndex = match.index;
+    const afterStart = startIndex + match[0].length;
+    let endIndex;
+    if (rule.lastEnd === -1) {
+      endIndex = text.length;
+    } else if (rule.lastEnd !== -2 && afterStart <= rule.lastEnd - rule.end.length) {
+      endIndex = rule.lastEnd;
+    } else {
+      const found = text.indexOf(rule.end, afterStart);
+      if (found === -1) {
+        rule.lastEnd = -1;
+        endIndex = text.length;
+      } else {
+        rule.lastEnd = found + rule.end.length;
+        endIndex = rule.lastEnd;
+      }
+    }
+    return { index: startIndex, length: endIndex - startIndex };
+  }
+
   rule.regex.lastIndex = from;
   let match = rule.regex.exec(text);
   while (match && match[0].length === 0) {

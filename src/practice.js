@@ -14,15 +14,31 @@ import { filterCommentLines } from "./import/comments.js";
 import { detectLanguage } from "./syntax/languages.js";
 import { tokenizeLines } from "./syntax/tokenize.js";
 
+export function splitLines(text) {
+  if (typeof text !== "string" || text.length === 0) return [];
+  const lines = text.split("\n");
+  if (text.endsWith("\n") && lines.length > 1 && lines[lines.length - 1] === "") {
+    lines.pop();
+  }
+  return lines;
+}
+
+export function countLines(text) {
+  return splitLines(text).length;
+}
+
 export function languageOf(item) {
   return item.language || detectLanguage(item.filename || item.path || item.repo || "");
 }
 
 export function createDocument(text, language) {
-  const lines = tokenizeLines(text, language).map((line, index) => ({
+  let lines = tokenizeLines(text, language).map((line, index) => ({
     ...line,
     number: index + 1,
   }));
+  if (text.endsWith("\n") && lines.length > 1 && lines[lines.length - 1].text === "") {
+    lines = lines.slice(0, -1);
+  }
   return { language, lines, totalLines: lines.length };
 }
 
@@ -36,11 +52,18 @@ const isBlank = (line) => line.text.trim() === "";
  *   start and end are dropped.
  * When skipping comments would leave nothing, the comments are kept and
  * `commentsKept` is true.
+ * When the range contains only blank lines, falls back to the whole document and
+ * `emptyRangeFallback` is true.
  */
 export function selectLines(document, { range = null, skipComments = false } = {}) {
+  let emptyRangeFallback = false;
   let lines = range
     ? document.lines.filter((line) => line.number >= range.start && line.number <= range.end)
     : document.lines;
+  if (range && !lines.some((line) => !isBlank(line))) {
+    emptyRangeFallback = true;
+    lines = document.lines;
+  }
   let commentsKept = false;
   if (skipComments) {
     const filtered = filterCommentLines(lines);
@@ -62,7 +85,8 @@ export function selectLines(document, { range = null, skipComments = false } = {
     pendingBlank = [];
     collapsed.push(line);
   }
-  return { ...document, lines: collapsed, commentsKept };
+  const finalLines = collapsed.length > 0 ? collapsed : lines;
+  return { ...document, lines: finalLines, commentsKept, emptyRangeFallback };
 }
 
 /**
@@ -74,6 +98,7 @@ export function chooseStartLine(
   lines,
   { exclude = -1, random = Math.random, minLines = RANDOM_START_MIN_LINES } = {},
 ) {
+  if (!lines || lines.length === 0) return 0;
   const needed = Math.min(minLines, lines.length);
   const candidates = [];
   for (let i = 0; lines.length - i >= needed; i += 1) {

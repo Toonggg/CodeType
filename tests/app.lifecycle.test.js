@@ -167,4 +167,45 @@ describe("page and source changes", () => {
     expect(els.countdownSeconds.value).toBe("60");
     expect(els.punishmentToggle.getAttribute("aria-pressed")).toBe("true");
   });
+
+  test("boot recovers safely if savedImport has empty target (BUG-1)", () => {
+    app.destroy();
+    localStorage.setItem(
+      "codetype-last-import",
+      JSON.stringify({
+        version: 2,
+        id: "custom",
+        filename: "test.py",
+        repo: "test.py",
+        path: "/ local",
+        code: "\n\n\n",
+        range: { start: 1, end: 3 },
+      }),
+    );
+    // Should not throw and should fall back to EXAMPLES[0]
+    ({ app, els } = mountApp());
+    expect(app.store.get().item.id).toBe("python-stdlib");
+    expect(localStorage.getItem("codetype-last-import")).toBeNull();
+  });
+
+  test("IME composition text is ignored while composing and scored on compositionend (BUG-6)", () => {
+    const inputSpy = vi.spyOn(app.actions, "input");
+    els.input.focus();
+
+    // 1. compositionstart
+    els.input.dispatchEvent(new CompositionEvent("compositionstart", { bubbles: true }));
+
+    // 2. intermediate input with isComposing: true
+    els.input.value = "d";
+    const event = new InputEvent("input", { bubbles: true, isComposing: true });
+    Object.defineProperty(event, "isComposing", { value: true });
+    els.input.dispatchEvent(event);
+
+    expect(inputSpy).not.toHaveBeenCalled();
+
+    // 3. compositionend
+    els.input.dispatchEvent(new CompositionEvent("compositionend", { bubbles: true }));
+    expect(inputSpy).toHaveBeenCalledTimes(1);
+    expect(inputSpy).toHaveBeenCalledWith("d");
+  });
 });

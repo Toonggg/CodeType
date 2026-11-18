@@ -36,8 +36,9 @@ export function computeProgress(typedLength, targetLength) {
 }
 
 export function computeStats(session, elapsedMs, { final = false } = {}) {
+  const correctTyped = Math.max(0, session.correct - (session.insertedCorrect ?? 0));
   return {
-    wpm: computeWpm(session.correct, elapsedMs, { final }),
+    wpm: computeWpm(correctTyped, elapsedMs, { final }),
     accuracy: computeAccuracy(session.entered, session.errors),
     progress: computeProgress(session.typed.length, session.target.length),
     errors: session.errors,

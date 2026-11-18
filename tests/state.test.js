@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   ALL_EVENTS,
   ALL_STATUSES,
@@ -93,5 +93,15 @@ describe("createStore", () => {
     unsubscribe();
     store.set({ a: 4 });
     expect(calls).toHaveLength(1);
+  });
+
+  test("skips notifying subscribers when patch values are unchanged (PERF-5)", () => {
+    const store = createStore({ x: 10, y: 20 });
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.set({ x: 10 });
+    expect(listener).not.toHaveBeenCalled();
+    store.set({ x: 11 });
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

@@ -38,9 +38,9 @@ export function applyTheme(els, dark, doc = document) {
     ?.setAttribute("content", THEME_COLORS[dark ? "dark" : "light"]);
 }
 
-export function renderTheme(els, state, prev) {
+export function renderTheme(els, state, prev, { win = window, doc = document } = {}) {
   if (prev && state.settings.theme === prev.settings.theme) return;
-  applyTheme(els, isDark(state.settings.theme));
+  applyTheme(els, isDark(state.settings.theme, win), doc);
 }
 
 /** Re-applies the theme when the OS preference changes and no choice is saved. */

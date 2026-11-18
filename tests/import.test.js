@@ -229,6 +229,30 @@ describe("fetchGitHubFile (R3)", () => {
     };
     await expect(fetchGitHubFile("u", { fetchImpl })).rejects.toThrow(/Could not reach GitHub/);
   });
+
+  test("aborts stream early when response.body exceeds maxBytes (BUG-7)", async () => {
+    const chunk = new Uint8Array(600_000);
+    let cancelled = false;
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(chunk);
+        controller.enqueue(chunk);
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+    const fetchImpl = async () => ({
+      status: 200,
+      ok: true,
+      headers: new Map(),
+      body: stream,
+    });
+    await expect(fetchGitHubFile("u", { fetchImpl, maxBytes: 1_000_000 })).rejects.toThrow(
+      /too large/,
+    );
+    expect(cancelled).toBe(true);
+  });
 });
 
 describe("prepareImport (B13)", () => {
@@ -269,6 +293,22 @@ describe("prepareImport (B13)", () => {
   test("warns about characters that are hard to type", () => {
     expect(prepareImport(`s = "${ch(0xe9)}"`, meta).notices[0]).toMatch(/hard to type/);
   });
+
+  test("single-line 500 KB file is truncated to PRACTICE_MAX_CHARS with notice (PERF-2)", () => {
+    const text = "x".repeat(500_000);
+    const { record, notices } = prepareImport(text, meta);
+    expect(record.code.length).toBeLessThanOrEqual(20_000);
+    expect(notices.some((n) => n.includes("truncated"))).toBe(true);
+  });
+
+  test("default range clamps files that exceed character cap (PERF-2)", () => {
+    // 100 lines of 500 chars = 50,000 chars (> 20,000 cap)
+    const text = Array.from({ length: 100 }, () => "a".repeat(500)).join("\n");
+    const { record, notices } = prepareImport(text, meta);
+    expect(record.range).not.toBeNull();
+    expect(record.range.end).toBeLessThan(100);
+    expect(notices.some((n) => n.includes("at most 20000 characters"))).toBe(true);
+  });
 });
 
 describe("clampRange", () => {
@@ -276,15 +316,26 @@ describe("clampRange", () => {
     expect(clampRange({ start: 0, end: 5 }, 10)).toEqual({
       range: { start: 1, end: 5 },
       limited: false,
+      limitedReason: null,
     });
     expect(clampRange({ start: 8, end: 3 }, 10)).toEqual({
       range: { start: 8, end: 8 },
       limited: false,
+      limitedReason: null,
     });
     expect(clampRange({ start: 1, end: 900 }, 1000)).toEqual({
       range: { start: 1, end: 400 },
       limited: true,
+      limitedReason: "lines",
     });
+  });
+
+  test("clamps ranges by character count (PERF-2)", () => {
+    const lineLengths = Array(50).fill(1000); // 50 lines of 1000 chars
+    const clamped = clampRange({ start: 1, end: 50 }, 50, 400, lineLengths, 20_000);
+    expect(clamped.limited).toBe(true);
+    expect(clamped.limitedReason).toBe("chars");
+    expect(clamped.range.end).toBeLessThanOrEqual(20);
   });
 });
 

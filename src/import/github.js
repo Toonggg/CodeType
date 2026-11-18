@@ -106,8 +106,33 @@ export async function fetchGitHubFile(
         `That file is ${formatBytes(length)}. CodeType imports files up to ${formatBytes(maxBytes)}.`,
       );
     }
+    if (response.body && typeof response.body.getReader === "function") {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let bytesRead = 0;
+      let text = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        bytesRead += value.byteLength;
+        if (bytesRead > maxBytes) {
+          try {
+            await reader.cancel();
+          } catch {
+            // Ignore cancel errors
+          }
+          throw new ImportError(
+            `That file is too large. CodeType imports files up to ${formatBytes(maxBytes)}.`,
+          );
+        }
+        text += decoder.decode(value, { stream: true });
+      }
+      text += decoder.decode();
+      return text;
+    }
     const text = await response.text();
-    if (text.length > maxBytes) {
+    const byteLength = new TextEncoder().encode(text).length;
+    if (byteLength > maxBytes) {
       throw new ImportError(
         `That file is too large. CodeType imports files up to ${formatBytes(maxBytes)}.`,
       );

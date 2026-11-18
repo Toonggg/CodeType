@@ -75,6 +75,20 @@ describe("local files", () => {
     expect(els.noticeText.textContent).toMatch(/too large to remember/);
     expect(els.notice.dataset.empty).toBe("false");
   });
+
+  test("import failure does not persist bad record to storage (BUG-3)", async () => {
+    mount();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Mock buildTarget to throw during import
+    const fakeFile = {
+      name: "crash.py",
+      size: 10,
+      text: async () => "\n\n",
+    };
+    await app.actions.importLocalFile(fakeFile);
+    expect(localStorage.getItem("codetype-last-import")).toBeNull();
+    consoleSpy.mockRestore();
+  });
 });
 
 describe("GitHub files", () => {

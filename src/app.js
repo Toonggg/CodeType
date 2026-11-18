@@ -6,6 +6,7 @@
  */
 import {
   DOUBLE_ESCAPE_MS,
+  PRACTICE_MAX_CHARS,
   PRACTICE_MAX_LINES,
   SHAKE_MS,
   STATS_TICK_MS,
@@ -68,6 +69,7 @@ export function createApp(
   let countdownId = null;
   let shakeId = null;
   let lastEscape = { at: -Infinity, status: null };
+  let cachedTypedText = "";
 
   // The full document of the current item is tokenized once and reused when the
   // range or the skip-comments setting changes.
@@ -86,11 +88,24 @@ export function createApp(
   }
 
   const settings = loadSettings();
-  const savedImport = loadImport();
-  const firstItem = savedImport ?? EXAMPLES[0];
-  const firstDocument = practiceDocumentFor(firstItem, settings);
-  const firstStart = settings.randomStart ? chooseStartLine(firstDocument.lines, { random }) : 0;
-  const firstTarget = buildTarget(firstDocument, firstStart);
+  let savedImport = loadImport();
+  let firstItem = savedImport ?? EXAMPLES[0];
+  let firstDocument;
+  let firstStart;
+  let firstTarget;
+  try {
+    firstDocument = practiceDocumentFor(firstItem, settings);
+    firstStart = settings.randomStart ? chooseStartLine(firstDocument.lines, { random }) : 0;
+    firstTarget = buildTarget(firstDocument, firstStart);
+    if (!firstTarget.chars.length) throw new Error("Empty target");
+  } catch {
+    removeKey(STORAGE_KEYS.lastImport);
+    savedImport = null;
+    firstItem = EXAMPLES[0];
+    firstDocument = practiceDocumentFor(firstItem, settings);
+    firstStart = settings.randomStart ? chooseStartLine(firstDocument.lines, { random }) : 0;
+    firstTarget = buildTarget(firstDocument, firstStart);
+  }
   const store = createStore({
     status: STATUS.IDLE,
     focused: false,
@@ -165,6 +180,7 @@ export function createApp(
 
   /** Clears the typed text and the clock (the single RESET path, Q4). */
   function resetSession() {
+    cachedTypedText = "";
     stopwatch.reset();
     stopShake();
     if (els.input.value !== "") els.input.value = "";
@@ -228,6 +244,7 @@ export function createApp(
    * focused). Restart alone never calls this, so it retries the same start (U8).
    */
   function setTarget(document, startLine, event = EVENT.RESET) {
+    cachedTypedText = "";
     const target = buildTarget(document, startLine);
     store.set({
       document,
@@ -241,8 +258,14 @@ export function createApp(
 
   /** Rebuilds the practice lines of the current item (range or settings changed). */
   function refreshDocument() {
-    const { item, settings: current } = store.get();
+    const { item, settings: current, notices = [] } = store.get();
     const document = practiceDocumentFor(item, current);
+    if (document.emptyRangeFallback && item.range) {
+      const msg = `Lines ${item.range.start}–${item.range.end} are empty; showing the whole file.`;
+      if (!notices.includes(msg)) {
+        store.set({ notices: [...notices, msg] });
+      }
+    }
     setTarget(document, pickStart(document));
   }
 
@@ -266,7 +289,7 @@ export function createApp(
     shakeId = win.setTimeout(stopShake, SHAKE_MS);
   }
 
-  function handleInput(rawValue) {
+  function handleInput(rawValue, { isTab = false } = {}) {
     const state = store.get();
     if (!acceptsInput(state.status)) {
       // Typing is ignored outside ready/running/paused (B3).
@@ -274,7 +297,27 @@ export function createApp(
       return;
     }
     const previous = state.session;
-    const applied = applyTyped(previous, toChars(rawValue));
+    let nextTyped;
+    if (
+      !isTab &&
+      rawValue.startsWith(cachedTypedText) &&
+      rawValue.length > cachedTypedText.length &&
+      rawValue.length - cachedTypedText.length <= 16
+    ) {
+      const suffix = rawValue.slice(cachedTypedText.length);
+      nextTyped = previous.typed.concat(toChars(suffix));
+    } else if (
+      !isTab &&
+      cachedTypedText.startsWith(rawValue) &&
+      cachedTypedText.length > rawValue.length &&
+      cachedTypedText.length - rawValue.length <= 16
+    ) {
+      const removedCount = toChars(cachedTypedText.slice(rawValue.length)).length;
+      nextTyped = previous.typed.slice(0, Math.max(0, previous.typed.length - removedCount));
+    } else {
+      nextTyped = toChars(rawValue);
+    }
+    const applied = applyTyped(previous, nextTyped, { isTab });
     const { from } = applied;
     let { session, to } = applied;
 
@@ -295,6 +338,7 @@ export function createApp(
     }
 
     const text = session.typed.join("");
+    cachedTypedText = text;
     if (els.input.value !== text) els.input.value = text;
     dispatch(EVENT.TYPE);
     store.set({ session, edit: { from, to }, elapsedMs: stopwatch.elapsedMs() });
@@ -333,7 +377,7 @@ export function createApp(
     if (!acceptsInput(status)) return false;
     const run = smartTab(session.target, session.typed.length);
     if (run.length) {
-      handleInput(els.input.value + run.join(""));
+      handleInput(els.input.value + run.join(""), { isTab: true });
       return true;
     }
     return status === STATUS.RUNNING;
@@ -386,13 +430,18 @@ export function createApp(
 
   /** Saves and selects a prepared import; the text stays usable if storage is full (B13). */
   function useImport(record, notices = []) {
+    const practiceDoc = practiceDocumentFor(record, store.get().settings);
+    const start = pickStart(practiceDoc);
+    const target = buildTarget(practiceDoc, start);
+    if (!target.chars.length) throw new Error("Empty practice target");
+
     const messages = [...notices];
     if (!writeJSON(STORAGE_KEYS.lastImport, record)) {
       messages.push("Loaded, but the file is too large to remember between sessions.");
     }
-    store.set({ savedImport: record, importError: null, notices: messages });
+    store.set({ savedImport: record, importError: null, notices: messages, item: record });
     els.optionsMenu.open = false;
-    selectItem(record);
+    setTarget(practiceDoc, start);
   }
 
   async function runImport(task) {
@@ -401,6 +450,9 @@ export function createApp(
     try {
       await task();
     } catch (error) {
+      if (!(error instanceof ImportError)) {
+        console.error(error);
+      }
       store.set({ importError: messageOf(error) });
     } finally {
       store.set({ importBusy: false });
@@ -443,25 +495,32 @@ export function createApp(
   function setRange(startValue, endValue) {
     const { item } = store.get();
     if (item.id !== "custom") return;
-    const total = fullDocumentFor(item).totalLines;
-    const { range, limited } = clampRange(
+    const fullDoc = fullDocumentFor(item);
+    const total = fullDoc.totalLines;
+    const lineLengths = fullDoc.lines.map((l) => l.text.length);
+    const { range, limited, limitedReason } = clampRange(
       { start: Number(startValue), end: Number(endValue) },
       total,
+      PRACTICE_MAX_LINES,
+      lineLengths,
+      PRACTICE_MAX_CHARS,
     );
     const whole = range.start === 1 && range.end === total;
     const next = { ...item, range: whole ? null : range };
-    documentCache = { item: next, document: fullDocumentFor(item) };
-    writeJSON(STORAGE_KEYS.lastImport, next);
+    documentCache = { item: next, document: fullDoc };
     store.set({
       item: next,
       savedImport: next,
       notices: limited
         ? [
-            `At most ${PRACTICE_MAX_LINES} lines are practiced at once, so the range ends at line ${range.end}.`,
+            limitedReason === "chars"
+              ? `At most ${PRACTICE_MAX_CHARS} characters are practiced at once, so the range ends at line ${range.end}.`
+              : `At most ${PRACTICE_MAX_LINES} lines are practiced at once, so the range ends at line ${range.end}.`,
           ]
         : [],
     });
     refreshDocument();
+    writeJSON(STORAGE_KEYS.lastImport, next);
   }
 
   /** Removes the imported code from this browser (U11, R6). */
@@ -560,7 +619,7 @@ export function createApp(
 
   const targetView = createTargetView(els);
   const renderers = [
-    renderTheme,
+    (elements, state, prev) => renderTheme(elements, state, prev, { win, doc }),
     renderControls,
     renderImport,
     (_, state, prev) => targetView.render(state, prev),

@@ -120,6 +120,14 @@ export function createStore(initialState) {
   return {
     get: () => state,
     set(patch) {
+      let changed = false;
+      for (const key of Object.keys(patch)) {
+        if (state[key] !== patch[key]) {
+          changed = true;
+          break;
+        }
+      }
+      if (!changed) return;
       const previous = state;
       state = { ...state, ...patch };
       for (const listener of listeners) listener(state, previous);

@@ -53,6 +53,24 @@ test("computeStats combines the session and the clock", () => {
   });
 });
 
+test("typed versus auto-indented line gives same WPM per typed key (BUG-4)", () => {
+  const target = toChars("a\n    b");
+  // Case 1: user types 'a', '\n', and 'b' (with auto-indent inserting the 4 spaces)
+  let s1 = applyTyped(createSession(target), toChars("a\n"));
+  s1 = applyTyped(s1.session, toChars("a\n    "), { autoFrom: 2 });
+  s1 = applyTyped(s1.session, toChars("a\n    b"));
+
+  // Case 2: flat code where user types 'a', 'x', 'b' (3 keystrokes, 3 correct)
+  const targetFlat = toChars("axb");
+  const s2 = applyTyped(createSession(targetFlat), toChars("axb"));
+
+  const stats1 = computeStats(s1.session, 60_000, { final: true });
+  const stats2 = computeStats(s2.session, 60_000, { final: true });
+
+  // Both should compute WPM from 3 typed characters
+  expect(stats1.wpm).toBe(stats2.wpm);
+});
+
 test("formatTime pads minutes and seconds", () => {
   expect(formatTime(65)).toBe("01:05");
 });

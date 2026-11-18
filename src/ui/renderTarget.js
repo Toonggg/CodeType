@@ -32,10 +32,27 @@ function renderHeader(els, { item, target, document }) {
   els.lineCount.textContent = `${String(target.lineCount).padStart(2, "0")} lines`;
 }
 
+function lineForIndex(lineStarts, index) {
+  let low = 0;
+  let high = lineStarts.length - 1;
+  let line = 0;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    if (lineStarts[mid] <= index) {
+      line = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+  return line;
+}
+
 export function createTargetView(els) {
   let spans = [];
   let baseClasses = [];
   let lineHeight = 0;
+  let lastScrollLine = -1;
 
   function classFor(index, target, session) {
     if (index === session.typed.length) return `${baseClasses[index]} current`;
@@ -73,6 +90,7 @@ export function createTargetView(els) {
     els.targetText.textContent = target.chars.join("");
     // Read once per target, never per keystroke (P2).
     lineHeight = parseFloat(getComputedStyle(els.display).lineHeight) || 0;
+    lastScrollLine = -1;
   }
 
   function patch({ target, session }, from, to) {
@@ -83,12 +101,18 @@ export function createTargetView(els) {
     }
   }
 
-  /** Keeps the cursor near the middle; offsetTop is correct with wrapped lines (B9). */
-  function scrollToCursor({ session }) {
-    const span = spans[session.typed.length];
+  /** Keeps the cursor near the middle; offsetTop is correct with wrapped lines (B9, PERF-4). */
+  function scrollToCursor({ target, session }) {
+    const cursor = session.typed.length;
+    const currentLine = lineForIndex(target.lineStarts, cursor);
+    if (currentLine === lastScrollLine) return;
+    lastScrollLine = currentLine;
+    const span = spans[cursor] ?? spans[spans.length - 1];
     if (!span) return;
-    const top = span.offsetTop - els.display.clientHeight / 2 + lineHeight;
-    els.display.scrollTop = Math.max(0, top);
+    const targetTop = Math.max(0, span.offsetTop - els.display.clientHeight / 2 + lineHeight);
+    if (Math.abs(els.display.scrollTop - targetTop) > 1) {
+      els.display.scrollTop = targetTop;
+    }
   }
 
   function render(state, prev) {

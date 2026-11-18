@@ -42,6 +42,15 @@ describe("precedence (B27)", () => {
     );
   });
 
+  test("tokenizing files with many /* inside strings is linear (PERF-1)", () => {
+    const input = 'x = "src/*.js";\n'.repeat(20000);
+    const start = performance.now();
+    const types = tokenize(input, "javascript");
+    const elapsed = performance.now() - start;
+    expect(types).toHaveLength(input.length);
+    expect(elapsed).toBeLessThan(500); // 20k lines in ~10ms (was >2000ms)
+  });
+
   test("an unterminated docstring runs to the end of the text", () => {
     expect(tokens('x = 1\n"""open\ny = 2', "python")).toBe(
       '[type:x] = [number:1]\n[string:"""open\ny = 2]'.replace("[type:x]", "x"),

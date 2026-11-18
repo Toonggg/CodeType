@@ -58,7 +58,24 @@ describe("applyTyped", () => {
   test("auto-inserted characters are not keystrokes", () => {
     let s = type(session("a\n    b"), "a\n").session;
     s = type(s, "a\n    ", { autoFrom: 2 }).session;
-    expect(s).toMatchObject({ correct: 6, entered: 2, errors: 0 });
+    expect(s).toMatchObject({ correct: 6, entered: 2, errors: 0, insertedCorrect: 4 });
+  });
+
+  test("one Tab equals one keystroke and marks inserted characters (BUG-4)", () => {
+    const s = type(session("    return 1"), "    ", { isTab: true }).session;
+    expect(s).toMatchObject({ correct: 4, entered: 1, errors: 0, insertedCorrect: 4 });
+  });
+
+  test("backspacing over inserted characters does not increment corrections (BUG-4)", () => {
+    let s = type(session("a\n    b"), "a\n").session;
+    s = type(s, "a\n    ", { autoFrom: 2 }).session;
+    expect(s.corrections).toBe(0);
+    // Backspace 4 spaces of auto-indentation
+    s = type(s, "a\n").session;
+    expect(s.corrections).toBe(0);
+    // Backspace the user-typed newline
+    s = type(s, "a").session;
+    expect(s.corrections).toBe(1);
   });
 
   test("astral characters are single positions (B10)", () => {
@@ -74,6 +91,10 @@ describe("isComplete", () => {
   test("requires every character to match", () => {
     expect(isComplete(type(session("a b"), "a\tb").session)).toBe(false);
     expect(isComplete(type(session("a b"), "a b").session)).toBe(true);
+  });
+
+  test("returns false when target is empty (BUG-1)", () => {
+    expect(isComplete(session(""))).toBe(false);
   });
 });
 

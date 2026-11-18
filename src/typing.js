@@ -37,6 +37,8 @@ export function createSession(targetChars) {
     entered: 0,
     errors: 0,
     corrections: 0,
+    insertedCorrect: 0,
+    inserted: [],
   };
 }
 
@@ -51,40 +53,77 @@ function commonPrefixLength(a, b) {
  * Applies a new typed buffer (clamped to the target length).
  * Characters at index >= autoFrom were inserted by the app (auto-indent) and are
  * not counted as keystrokes.
+ * If isTab is true, the insertion is from a smartTab keypress (counts as 1 keystroke).
  * Returns the new session and the inclusive index range [from, to] whose display
  * state may have changed; it always covers the old and the new cursor.
  */
-export function applyTyped(session, nextTyped, { autoFrom = Infinity } = {}) {
+export function applyTyped(session, nextTyped, { autoFrom = Infinity, isTab = false } = {}) {
   const { target, typed } = session;
   const next = nextTyped.length > target.length ? nextTyped.slice(0, target.length) : nextTyped;
   const from = commonPrefixLength(typed, next);
-  let { correct, incorrect, entered, errors, corrections } = session;
+  let { correct, incorrect, entered, errors, corrections, insertedCorrect = 0 } = session;
+  const inserted = [...(session.inserted ?? [])].slice(0, typed.length);
 
   for (let i = from; i < typed.length; i += 1) {
-    if (typed[i] === target[i]) correct -= 1;
-    else incorrect -= 1;
+    const wasInserted = inserted[i] ?? false;
+    if (typed[i] === target[i]) {
+      correct -= 1;
+      if (wasInserted) insertedCorrect -= 1;
+    } else {
+      incorrect -= 1;
+    }
+    if (!wasInserted) {
+      corrections += 1;
+    }
   }
-  corrections += typed.length - from;
+  inserted.length = from;
 
   for (let i = from; i < next.length; i += 1) {
+    const isAuto = i >= autoFrom;
+    const isAppInserted = isAuto || isTab;
+    inserted[i] = isAppInserted;
+
     const ok = next[i] === target[i];
-    if (ok) correct += 1;
-    else incorrect += 1;
-    if (i < autoFrom) {
+    if (ok) {
+      correct += 1;
+      if (isAppInserted) insertedCorrect += 1;
+    } else {
+      incorrect += 1;
+    }
+
+    if (!isAuto && !isTab) {
       entered += 1;
       if (!ok) errors += 1;
     }
   }
 
+  if (isTab) {
+    entered += 1;
+  }
+
   return {
-    session: { ...session, typed: next, correct, incorrect, entered, errors, corrections },
+    session: {
+      ...session,
+      typed: next,
+      correct,
+      incorrect,
+      entered,
+      errors,
+      corrections,
+      insertedCorrect,
+      inserted,
+    },
     from,
     to: Math.max(typed.length, next.length),
   };
 }
 
 export function isComplete(session) {
-  return session.typed.length === session.target.length && session.incorrect === 0;
+  return (
+    session.target.length > 0 &&
+    session.typed.length === session.target.length &&
+    session.incorrect === 0
+  );
 }
 
 /** The run of spaces and tabs the target expects starting at `index`. */
